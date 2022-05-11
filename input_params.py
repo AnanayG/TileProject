@@ -20,4 +20,9 @@ TILE_PX_HEIGHT = TILE_HEIGHT*PIXELS_PER_MM
 GROUTING_SIZE_PX = GROUTING_SIZE*PIXELS_PER_MM
 GROUTING_OFFSET = int(GROUTING_SIZE_PX/2)
 
+symmetry = {'vertical':True,
+            'horizontal':True,
+            'right_diagonal':False,
+            'left_diagonal':False}
+
 f = open("temp", "w")

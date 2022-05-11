@@ -22,11 +22,6 @@ if args.Seed:
     print("Random Seed: % s" % args.Seed)
     np.random.seed(int(args.Seed))
 
-symmetry = {'vertical':True,
-            'horizontal':False,
-            'right_diagonal':False,
-            'left_diagonal':False}
-
 
 class Rectangle():
     def __init__(self, symmetry=None, pixel_shape=None):
@@ -104,6 +99,7 @@ class Rectangle():
             set_.add((width_num_reflected, height_num_reflected))
             self.get_reflected_pixel_list(set_, width_num_reflected, height_num_reflected, pixel_color)
 
+
     def rectangularGrid(self, image):
         for i in range(self.no_per_height):
             for j in range(self.no_per_width):
@@ -111,24 +107,49 @@ class Rectangle():
                 # f.write(f'{color_rand.name=} {i} {j} \n')
                 self.color_pixel_and_symmetrize(image,j,i,color_rand)
 
+class Grid:
+    def __init__(self, base_pixel_x, base_pixel_y) -> None:
+        self.base_pixel_x = base_pixel_x
+        self.base_pixel_y = base_pixel_y
+    
+    def generate_grid(self):
+        self.rect = Rectangle(symmetry=symmetry, pixel_shape=RectangularPixel)
+        self.NEW_TILE_PX_WIDTH, self.NEW_TILE_PX_HEIGHT = self.rect.resize_image(rectangle_width, rectangle_height)
+        image = np.zeros((self.NEW_TILE_PX_HEIGHT+1, self.NEW_TILE_PX_WIDTH+1, 3), np.uint8) # height, width order is reversed
+        self.rect.rectangularGrid(image)
 
-rect = Rectangle(symmetry=symmetry, pixel_shape=RectangularPixel)
-NEW_TILE_PX_WIDTH, NEW_TILE_PX_HEIGHT = rect.resize_image(rectangle_width, rectangle_height)
-image = np.zeros((NEW_TILE_PX_HEIGHT+1, NEW_TILE_PX_WIDTH+1, 3), np.uint8) # height, width order is reversed
-rect.rectangularGrid(image)
+        # cv2.imshow('Rectangular Pattern', image)
+        # cv2.waitKey(0)
 
-cv2.imshow('Rectangular Pattern', image)
-cv2.waitKey(0)
+        num_width  = np.random.randint(self.rect.no_per_width)
+        num_height = np.random.randint(self.rect.no_per_height)
+        self.rect.color_pixel_and_symmetrize(image, num_width, num_height, pixel_color=new_color)
 
-num_width  = np.random.randint(rect.no_per_width)
-num_height = np.random.randint(rect.no_per_height)
-rect.color_pixel_and_symmetrize(image, num_width, num_height, pixel_color=new_color)
+        return image
+        cv2.imshow('Rectangular Pattern-color-changed', image)
+        cv2.waitKey(0)
 
-cv2.imshow('Rectangular Pattern-color-changed', image)
-cv2.waitKey(0)
+        big_image = image_tiled(image, mode="rotated")
+        cv2.imshow('Repeated', big_image)
+        cv2.waitKey(0)
 
-big_image = image_tiled(image, mode="rotated")
-cv2.imshow('Repeated', big_image)
-cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
-cv2.destroyAllWindows()
+    def color_pixel(self, image, pixel_x, pixel_y, new_color):
+        pixel_x = pixel_x - self.base_pixel_x
+        pixel_y = pixel_y - self.base_pixel_y
+
+        if (pixel_x > self.NEW_TILE_PX_WIDTH or pixel_x < 0):
+            return image
+        if (pixel_y > self.NEW_TILE_PX_HEIGHT or pixel_y < 0):
+            return image
+        
+        x = pixel_x//self.rect.pixel_width_plus_grout
+        y = pixel_y//self.rect.pixel_height_plus_grout
+
+        self.rect.color_pixel_and_symmetrize(image, x,y, pixel_color=new_color)
+        return image
+
+if __name__ == "__main__":
+    grid = Grid()
+    grid.generate_grid()
