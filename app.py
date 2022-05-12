@@ -2,6 +2,7 @@ import numpy
 import PySimpleGUI as sg
 from base_classes import array_to_data, Color
 from generator import Grid
+from input_params import TileParams
 
 # sg.theme('Dark Teal')
 
@@ -21,11 +22,6 @@ class App:
                               change_submits=True,
                               drag_submits=False,
                               background_color='lightblue')
-        column1 = [
-          [sg.Text('Tile Size', font='ANY 15')],
-          [sg.Text('Length: ', size=(12,1)), sg.In(k='-TILE_LEN-', size=(10,1))],
-          [sg.Text('Width: ', size=(12,1)), sg.In(k='-TILE_WIDTH-', size=(10,1))],
-        ]
         # ------ Menu Definition ------ #
         menu_def = [['&File', ['&Open', '&Save', 'E&xit', 'Properties']],
                     ['&Edit', ['Paste', ['Special', 'Normal', ], 'Undo'], ],
@@ -34,15 +30,15 @@ class App:
         left_pane = [
           [sg.Menu(menu_def, tearoff=True)],
           [sg.Text('Tile Size', font='ANY 15')],
-          [sg.Text('Length: ', size=(12,1)), sg.In(k='-TILE_LEN-', size=(10,1))],
+          [sg.Text('Height: ', size=(12,1)), sg.In(k='-TILE_HEIGHT-', size=(10,1))],
           [sg.Text('Width: ', size=(12,1)), sg.In(k='-TILE_WIDTH-', size=(10,1))],
 
           [sg.Text('Pixel Size', font='ANY 15')],
-          [sg.Text('Length: ', size=(12,1)), sg.In(k='-PIXEL_LEN-', size=(10,1))],
-          [sg.Text('Width: ', size=(12,1)), sg.In(k='-PIXEL_WIDTH-', size=(10,1))],
+          [sg.Text('Height: ', size=(12,1)), sg.In(k='-UNIT_HEIGHT-', size=(10,1))],
+          [sg.Text('Width: ', size=(12,1)), sg.In(k='-UNIT_WIDTH-', size=(10,1))],
 
           [sg.Text('Grouting Size', font='ANY 15'), 
-             sg.Slider(range=(1, 3), default_value=2,
+             sg.Slider(range=(1, 5), default_value=2,
                        orientation='h',
                        key='-GROUTING_SIZE-',
                        enable_events=True,
@@ -75,12 +71,15 @@ class App:
         ]
         self.window = sg.Window('Application', layout, finalize=True)
 
-        graph = self.window["-CANVAS-"]
-        self.grid = Grid(self.canvas_base_pixel_x, self.canvas_base_pixel_y)
-        self.base_image = self.grid.generate_grid()
-        self.update_canvas(self.base_image)
+        self.init_image()
 
-    
+    def init_image(self):
+        self.tileParams = TileParams()
+        
+        self.grid = Grid(self.tileParams, self.canvas_base_pixel_x, self.canvas_base_pixel_y)
+        self.grid.generate_grid()
+        self.update_canvas(self.grid.image)
+
     def event_loop(self):
         while True:
             event, values = self.window.read(timeout=0)
@@ -94,9 +93,60 @@ class App:
                 self.window['set_color_chooser'].Update(button_color=(values[event], values[event]))
             elif event == '-CANVAS-':
               print(values[event])
-              image = self.grid.color_pixel(self.base_image, values[event][0], values[event][1], self.color_picked)
+              graph = self.window["-CANVAS-"]
+
+              ## ADD LOGIC 
+              # if pixel color == picked color then do nothing
+              # print('Current color: ',self.grid.get_pixel_color(values[event][0], values[event][1]))
+
+              image = self.grid.color_pixel(self.grid.image, values[event][0], values[event][1], self.color_picked)
               self.update_canvas(image)
-                
+            elif event == 'Ok':
+              print("Ok pressed! tile_height: ", values['-TILE_HEIGHT-'],  "tile_width: ", values['-TILE_WIDTH-'])
+              self.update_image_params(values)
+    
+    def update_image_params(self, values):
+        height      = values['-TILE_HEIGHT-']
+        width       = values['-TILE_WIDTH-']
+        unit_height = values['-UNIT_HEIGHT-']
+        unit_width  = values['-UNIT_WIDTH-']
+        grouting_size = values['-GROUTING_SIZE-']
+
+        try:
+          height=int(height)
+        except ValueError:
+          height=None
+
+        try:
+          width=int(width)
+        except ValueError:
+          width=None
+
+        try:
+          unit_height=int(unit_height)
+        except ValueError:
+          unit_height=None
+          
+        try:
+          unit_width=int(unit_width)
+        except ValueError:
+          unit_width=None
+
+        try:
+          grouting_size=int(grouting_size)
+        except ValueError:
+          grouting_size=None
+        
+        graph = self.window["-CANVAS-"]
+        graph.erase()
+
+        self.tileParams.update_params(TILE_WIDTH=width, TILE_HEIGHT=height,
+                      rectangle_width=unit_width, rectangle_height=unit_height,
+                      GROUTING_SIZE=grouting_size)
+        self.grid = Grid(self.tileParams, self.canvas_base_pixel_x, self.canvas_base_pixel_y)
+        self.grid.generate_grid()
+        self.update_canvas(self.grid.image)
+    
     def update_canvas(self, image):
         graph = self.window["-CANVAS-"]
         data = array_to_data(image)

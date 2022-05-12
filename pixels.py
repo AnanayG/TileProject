@@ -27,20 +27,23 @@ class RectangularPixel():
             self.init_corners(center_point=center_point)
             
     def init_corners(self, center_point):
-        # self.l_top  = Point(base_width, base_height)
-        # self.r_bot  = Point(base_width + self.pixel_width_plus_grout, base_height + self.pixel_height_plus_grout)
-
         self.l_top = center_point.offset_point(x_off= -(self.pixel_width_plus_grout/2), y_off= -(self.pixel_height_plus_grout/2))
         self.r_bot = center_point.offset_point(x_off=  (self.pixel_width_plus_grout/2), y_off=  (self.pixel_height_plus_grout/2))
 
-        # f.write(str(self.l_top) + ' ' + str(self.r_bot) + ' ')
-        # print("offest points", self.l_top.offset_point(offset=GROUTING_OFFSET), self.r_bot.offset_point(offset=-GROUTING_OFFSET))
-        
         f.write(str(self.l_top) + ' ' + str(self.r_bot) + ' ')
-        # f.write(str(l_top.offset_point(offset=GROUTING_OFFSET)) + ' ' + str(r_bot.offset_point(offset=-GROUTING_OFFSET)) + '\n')
 
     def draw_grouting(self, image):
-        cv2.rectangle(image, self.l_top.get_point(), self.r_bot.get_point(), self.grouting_color.get_color(), thickness=cv2.FILLED)
+        cv2.rectangle(image, 
+                self.l_top.get_point(),
+                self.r_bot.get_point(),
+                self.grouting_color.get_color(),
+                thickness=cv2.FILLED
+            )
 
-    def draw_pixel(self, image):
-        cv2.rectangle(image, self.l_top.offset_point(offset=GROUTING_OFFSET).get_point(), self.r_bot.offset_point(offset=-GROUTING_OFFSET).get_point(), self.pixel_color.get_color(), thickness=cv2.FILLED)
+    def draw_pixel(self, image, tileParams):
+        cv2.rectangle(image, 
+                    self.l_top.offset_point(offset= tileParams.GROUTING_OFFSET).get_point(), 
+                    self.r_bot.offset_point(offset=-tileParams.GROUTING_OFFSET).get_point(), 
+                    self.pixel_color.get_color(), 
+                    thickness=cv2.FILLED
+                )
