@@ -1,3 +1,5 @@
+from base_classes import Color
+
 class TileParams:
     def __init__(self):
         # Numbers are in mm
@@ -16,7 +18,38 @@ class TileParams:
         # rectangle_width  = 120
         # rectangle_height = 60
 
+        self.symmetry = {'vertical'      :True,
+                         'horizontal'    :True,
+                         'right_diagonal':False,
+                         'left_diagonal' :False}
+
+        self.init_colors()
         self.calculate_params()
+
+    def init_colors(self):
+        PIXEL_COLOR    = Color(r=0x3f, g=0x9a, b=0xbe, name='blue1')
+        PIXEL_COLOR1   = Color(r=0x07, g=0x73, b=0x92, name='blue2')
+        PIXEL_COLOR2   = Color(r=0xca, g=0xdb, b=0xe0, name='blue3')
+
+        self.PIXEL_COLORS   = [PIXEL_COLOR, PIXEL_COLOR1, PIXEL_COLOR2]
+        self.PIXEL_COLORS_p = [0.7,         0.2,          0.1]
+
+        self.GROUTING_COLOR = Color(r=0x80, g=0xbf, b=0xca, name='blue4')
+        self.new_color      = Color(r=0xff, g=0xff, b=0x00, name='yellow')
+
+    def update_color(self, PIXEL_COLORS=None, PIXEL_COLORS_p=None, 
+                        GROUTING_COLOR=None):
+        if PIXEL_COLORS is list:
+            self.PIXEL_COLORS = PIXEL_COLORS
+
+            if PIXEL_COLORS_p is None:
+                self.PIXEL_COLORS_p = [1./len(PIXEL_COLORS) for _ in len(PIXEL_COLORS)]
+            else:
+                if len(PIXEL_COLORS_p) == len(PIXEL_COLORS):
+                    self.PIXEL_COLORS_p = PIXEL_COLORS_p
+        
+        if GROUTING_COLOR is not None:
+            self.GROUTING_COLOR = GROUTING_COLOR            
 
     def calculate_params(self):
         self.PIXELS_PER_MM = 2
@@ -26,16 +59,13 @@ class TileParams:
         self.GROUTING_SIZE_PX = self.GROUTING_SIZE*self.PIXELS_PER_MM
         self.GROUTING_OFFSET  = int(self.GROUTING_SIZE_PX/2)
 
-        self.symmetry = {'vertical'      :True,
-                         'horizontal'    :True,
-                         'right_diagonal':False,
-                         'left_diagonal' :False}
-
     def update_params(self, TILE_WIDTH=None,
                 TILE_HEIGHT=None,
                 GROUTING_SIZE=None,
                 rectangle_width=None,
-                rectangle_height=None):
+                rectangle_height=None,
+                vertical_symm=None,
+                horizontal_symm=None):
 
         ##TODO: add support for no_of_pixel (_per_side)
         
@@ -54,6 +84,10 @@ class TileParams:
         if rectangle_height is not None:
             self.rectangle_height = rectangle_height
 
+        if vertical_symm is not None:
+            self.symmetry['vertical'] = vertical_symm
+        if horizontal_symm is not None:
+            self.symmetry['horizontal'] = horizontal_symm
         self.calculate_params()
 
 f = open("temp", "w")

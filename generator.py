@@ -6,14 +6,6 @@ from base_classes import Point, Color
 from input_params import *
 from pixels import *
 
-# PIXEL_COLOR    = Color(255,0,0)
-PIXEL_COLOR    = Color(0x3f,0x9a,0xbe, 'blue1')
-PIXEL_COLOR1   = Color(0x07,0x73,0x92, 'blue2')
-PIXEL_COLOR2   = Color(0xca,0xdb,0xe0, 'blue3')
-
-GROUTING_COLOR = Color(0x80,0xbf,0xca, 'blue4')
-new_color      = Color(255,255,0, 'yellow')
-
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--Seed", help = "Random Seed")
@@ -46,6 +38,7 @@ class RectanglularGrid():
         self.no_per_width  = int(tileParams.TILE_PX_WIDTH/self.pixel_width_plus_grout)
         self.no_per_height = int(tileParams.TILE_PX_HEIGHT/self.pixel_height_plus_grout)
         f.write(f'{self.no_per_width=} {self.no_per_height=}' + '\n')
+        self.pixels_grid = [[None for _ in range(self.no_per_height)] for _ in range(self.no_per_width)]
 
         NEW_TILE_PX_WIDTH = self.no_per_width*self.pixel_width_plus_grout
         NEW_TILE_PX_HEIGHT = self.no_per_height*self.pixel_height_plus_grout
@@ -53,7 +46,19 @@ class RectanglularGrid():
 
         return (NEW_TILE_PX_WIDTH, NEW_TILE_PX_HEIGHT)
 
-    def color_pixel_with_grouting(self, image, width_num, height_num, pixel_color, grouting_color=GROUTING_COLOR):
+    def get_unit_color(self, image, width_num, height_num):
+        # base_width  = width_num *self.pixel_width_plus_grout
+        # base_height = height_num*self.pixel_height_plus_grout
+        # center = Point(base_width + (self.pixel_width_plus_grout/2), base_height + (self.pixel_height_plus_grout/2))
+        # coordi = center.get_point()
+
+        # # note: height and width are reversed
+        # return image[coordi[1]][coordi[0]]
+
+        pixel = self.pixels_grid[width_num][height_num]
+        return (pixel.pixel_color ,pixel.grouting_color)
+
+    def color_pixel_with_grouting(self, image, width_num, height_num, pixel_color, grouting_color=None):
         if width_num >= self.no_per_width or width_num<0:
             raise ValueError("width num outside range"+ f"no:{width_num} total:{self.no_per_width}")
         if height_num >= self.no_per_height or height_num<0:
@@ -64,6 +69,8 @@ class RectanglularGrid():
 
         center = Point(base_width + (self.pixel_width_plus_grout/2), base_height + (self.pixel_height_plus_grout/2))
 
+        if grouting_color is None:
+            grouting_color = self.tileParams.GROUTING_COLOR
         pixel = self.pixel_shape(center_point=center,
                                  pixel_color=pixel_color, 
                                  grouting_color=grouting_color, 
@@ -71,14 +78,15 @@ class RectanglularGrid():
                                  pixel_height_plus_grout=self.pixel_height_plus_grout)
         pixel.draw_grouting(image)
         pixel.draw_pixel(image, self.tileParams)
+        self.pixels_grid[width_num][height_num] = pixel
 
-    def color_pixel_and_symmetrize(self, image, width_num, height_num, pixel_color):
+    def color_pixel_and_symmetrize(self, image, width_num, height_num, pixel_color, grouting_color=None):
         set_ = {(width_num, height_num)}
-        self.get_reflected_pixel_list(set_, width_num, height_num, pixel_color)
+        self.get_reflected_pixel_list(set_, width_num, height_num)
         for element in set_:
-            self.color_pixel_with_grouting(image, element[0], element[1], pixel_color)
+            self.color_pixel_with_grouting(image, element[0], element[1], pixel_color, grouting_color)
 
-    def get_reflected_pixel_list(self, set_, width_num, height_num, pixel_color):
+    def get_reflected_pixel_list(self, set_, width_num, height_num):
         """
         this updates the set_ with all the (x,y) after reflecting (width_num,height_num) through all the symmetries 
         """
@@ -95,14 +103,25 @@ class RectanglularGrid():
             if (width_num_reflected, height_num_reflected) in set_:
                 continue
             set_.add((width_num_reflected, height_num_reflected))
-            self.get_reflected_pixel_list(set_, width_num_reflected, height_num_reflected, pixel_color)
+            self.get_reflected_pixel_list(set_, width_num_reflected, height_num_reflected)
 
     def techniqueBlend(self, image):
-        for i in range(self.no_per_height):
-            for j in range(self.no_per_width):
-                color_rand = np.random.choice([PIXEL_COLOR, PIXEL_COLOR1, PIXEL_COLOR2], p = [0.7,0.2,0.1])
+        for j in range(self.no_per_width):
+            for i in range(self.no_per_height):
+                color_rand = np.random.choice(self.tileParams.PIXEL_COLORS, p = self.tileParams.PIXEL_COLORS_p)
                 # f.write(f'{color_rand.name=} {i} {j} \n')
                 self.color_pixel_and_symmetrize(image,j,i,color_rand)
+
+    def recolorGrouting(self, image, grouting_color):
+        for j in range(self.no_per_width):
+            for i in range(self.no_per_height):
+                pixel_color, old_grouting_color = self.get_unit_color(image, j,i)
+
+                # PERFORMANCE: this calculated the reflected units for each unit
+                #  which can perhaps be avoided if you are doing for all rectangles
+                self.color_pixel_and_symmetrize(image, width_num=j, height_num=i, 
+                                    pixel_color=pixel_color, grouting_color=grouting_color)
+        return image
 
 class Grid:
     def __init__(self, tileParams, base_pixel_x, base_pixel_y) -> None:
@@ -125,9 +144,10 @@ class Grid:
         #this creates blend pattern
         self.rect.techniqueBlend(image)
 
+        #this colorises a random pixel
         num_width  = np.random.randint(self.rect.no_per_width)
         num_height = np.random.randint(self.rect.no_per_height)
-        self.rect.color_pixel_and_symmetrize(image, num_width, num_height, pixel_color=new_color)
+        self.rect.color_pixel_and_symmetrize(image, num_width, num_height, pixel_color=self.tileParams.new_color)
 
         self.image = image
         return image
@@ -159,15 +179,28 @@ class Grid:
         if x is None or y is None:
             return image
         
-        self.rect.color_pixel_and_symmetrize(image, x,y, pixel_color=new_color)
+        self.rect.color_pixel_and_symmetrize(image, x,y, 
+                    pixel_color=new_color, grouting_color=self.tileParams.GROUTING_COLOR)
         self.image = image
         return image
+
+    def change_grouting_color(self, new_color):
+        self.rect.pixel_shape.grouting_color = new_color
+        newImage = self.rect.recolorGrouting(self.image, new_color)
+        self.image = newImage
+        self.tileParams.GROUTING_COLOR = new_color
+        return newImage
 
     def get_pixel_color(self, pixel_x, pixel_y):
         x,y = self.convert_pixel_coordinates_to_unit_coordinates(pixel_x, pixel_y)
         if x is None or y is None:
-            return None
-        return self.image[x,y]
+            return None, None
+        
+        return self.rect.get_unit_color(self.image, x,y)
+
+    def save(self, format='png'):
+        image_rgb = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
+        cv2.imwrite('image.'+format, image_rgb)
 
 if __name__ == "__main__":
     grid = Grid()
