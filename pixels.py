@@ -30,8 +30,6 @@ class RectangularPixel():
         self.l_top = center_point.offset_point(x_off= -(self.pixel_width_plus_grout/2), y_off= -(self.pixel_height_plus_grout/2))
         self.r_bot = center_point.offset_point(x_off=  (self.pixel_width_plus_grout/2), y_off=  (self.pixel_height_plus_grout/2))
 
-        f.write(str(self.l_top) + ' ' + str(self.r_bot) + ' ')
-
     def draw_grouting(self, image):
         cv2.rectangle(image, 
                 self.l_top.get_point(),

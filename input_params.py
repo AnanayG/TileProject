@@ -102,4 +102,3 @@ class TileParams:
             self.symmetry['horizontal'] = horizontal_symm
         self.calculate_params()
 
-f = open("temp", "w")

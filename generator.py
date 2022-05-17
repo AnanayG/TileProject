@@ -37,7 +37,6 @@ class RectanglularGrid():
 
         self.no_per_width  = int(tileParams.TILE_PX_WIDTH/self.pixel_width_plus_grout)
         self.no_per_height = int(tileParams.TILE_PX_HEIGHT/self.pixel_height_plus_grout)
-        f.write(f'{self.no_per_width=} {self.no_per_height=}' + '\n')
         self.pixels_grid = [[None for _ in range(self.no_per_height)] for _ in range(self.no_per_width)]
 
         NEW_TILE_PX_WIDTH = self.no_per_width*self.pixel_width_plus_grout
@@ -109,7 +108,6 @@ class RectanglularGrid():
         for j in range(self.no_per_width):
             for i in range(self.no_per_height):
                 color_rand = np.random.choice(self.tileParams.PIXEL_COLORS, p = self.tileParams.PIXEL_COLORS_p)
-                # f.write(f'{color_rand.name=} {i} {j} \n')
                 self.color_pixel_and_symmetrize(image,j,i,color_rand)
 
     def recolorGrouting(self, image, grouting_color):

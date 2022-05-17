@@ -18,7 +18,6 @@ def image_tiled(image, mode="repeated", row_repeat=2,  col_repeat=2):
     i_height = height-1
 
     big_image = np.zeros(((row_repeat*i_width)+1, (col_repeat*i_height)+1, 3), np.uint8)
-    # f.write(f'{image.shape=}, {big_image.shape=}' + '\n')
 
     if mode=="repeated":
         for i in range(row_repeat):
@@ -29,8 +28,6 @@ def image_tiled(image, mode="repeated", row_repeat=2,  col_repeat=2):
         horizontally_flipped_image = np.flip(image, 1)
         veritcally_flipped_image   = np.flip(image, 0)
         reflected_flipped_image    = np.flip(veritcally_flipped_image, 1)
-
-        # f.write(f'{horizontally_flipped_image.shape=}, {veritcally_flipped_image.shape=}' + '\n')
 
         #the last row/column of pixels between two reflected images is common between adjacent images
         # this last row is the grouting line
