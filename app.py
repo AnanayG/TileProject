@@ -102,34 +102,34 @@ class App:
     def event_loop(self):
         past_event = None
         while True:
-            event, values = self.window.read(timeout=0)
+            event, values = self.window.read(timeout=1)
 
             # TEMP FIX: this bit of logic prevents consecutive repeat event to be processed multiple times
-            if (event in ['-SET_GROUTING_COLOR-', '-SET_PIXEL_COLOR-', 'Save']):
+            if (event in ['-SET_PIXEL_COLOR-', 'Save']):
               if past_event is not None:
                 continue
               else:
                 past_event = event
             elif (past_event is not None and event != past_event) or \
-                  event in ['-set_grouting_color_chooser-', '-set_pixel_color_chooser-']:
+                  event in ['-set_pixel_color_chooser-']:
               past_event = None
 
             if event == 'Cancel' or event == sg.WIN_CLOSED:
                 print("CANCEL seen")
                 break
             elif event == '-SET_PIXEL_COLOR-':
-                print("Pixel Color picked:", values[event])
                 pixel_color_picked = Color()
                 ret = pixel_color_picked.from_hex(values[event], name='pixel_color_picked')
-                if ret is not False and pixel_color_picked != self.pixel_color_picked:
+                if ret is not False and not pixel_color_picked.compare(self.pixel_color_picked):
+                  print("Pixel Color picked:", values[event])
                   self.pixel_color_picked = pixel_color_picked
                   self.window['-set_pixel_color_chooser-'].Update(button_color=(values[event], values[event]))
 
             elif event == '-SET_GROUTING_COLOR-':
-                print("Grouting Color picked:", values[event])
                 grouting_color_picked = Color()
                 ret = grouting_color_picked.from_hex(values[event], name='grouting_color_picked')
-                if ret is not False and grouting_color_picked != self.grouting_color_picked:
+                if ret is not False and not grouting_color_picked.compare(self.grouting_color_picked):
+                  print("Grouting Color picked:", values[event], grouting_color_picked, self.grouting_color_picked)
                   self.grouting_color_picked = grouting_color_picked
                   self.window['-set_grouting_color_chooser-'].Update(button_color=(values[event], values[event]))
                   
