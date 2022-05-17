@@ -11,6 +11,13 @@ class App:
         self.canvas_base_pixel_x = 20
         self.canvas_base_pixel_y = 45
 
+        self.blend_mode_color_count = 5
+        self.blend_mode_on = True
+        self.blend_mode_selections = {str(i):{f'-BLEND_COLOR{i}-'        :None, 
+                                              f'-BLEND_COLOR{i}_PERCENT-':0} 
+                    for i in range(self.blend_mode_color_count)}
+        self.bg_color_picked =  Color(hexcode='#808080', name='bg_default')
+
         self.init_graphics()
         self.init_values()
 
@@ -31,6 +38,23 @@ class App:
                     ['&Edit', ['Paste', ['Special', 'Normal', ], 'Undo'], ],
                     ['&Help', '&About...'], ]
 
+        # ------ EITHER THIS  ------ #
+        single_bg_color_menu = [
+            [sg.Text(f'Background', font='ANY 10', size=(12,1)),
+            sg.In("", size=(7, 1), enable_events=True, key=f'-SET_BG_COLOR-', do_not_clear=True),
+            sg.ColorChooserButton("", size=(5, 1), target=f'-SET_BG_COLOR-', button_color=('#808080', '#808080'),
+                                  border_width=1, key=f'-bg_color_chooser-')]
+          ]
+        # ------ OR THIS  ------ #
+        blend_mode_color_sel = [
+            [sg.Text(f'Color#{i}', font='ANY 10', size=(12,1)),
+            sg.In("", size=(7, 1), enable_events=True, key=f'-BLEND_COLOR{i}-', do_not_clear=True),
+            sg.ColorChooserButton("", size=(5, 1), target=f'-BLEND_COLOR{i}-', button_color=('#1f77b4', '#1f77b4'),
+                                  border_width=1, key=f'-blend_color_chooser{i}-'),
+            sg.In("0", size=(7, 1), enable_events=True, key=f'-BLEND_COLOR{i}_PERCENT-', do_not_clear=True)]
+            for i in range(self.blend_mode_color_count)
+          ]
+
         left_pane = [
           [sg.Menu(menu_def, tearoff=True)],
           [sg.Text('Tile Size', font='ANY 15')],
@@ -47,6 +71,11 @@ class App:
                        key='-GROUTING_SIZE-',
                        enable_events=True,
                        size=(15, 15)),],
+          [sg.HorizontalSeparator()],
+
+          [sg.Checkbox('Blend Mode', enable_events=True, key='-BLEND_MODE-', default=self.blend_mode_on)],
+          [self.collapse(blend_mode_color_sel, 'blend_mode_menu'  , self.blend_mode_on)],
+          [self.collapse(single_bg_color_menu, 'single_color_menu', not self.blend_mode_on)],
           [sg.HorizontalSeparator()],
 
           [sg.Text('Pixel Color', font='ANY 15', size=(12,1)),
@@ -117,25 +146,60 @@ class App:
             if event == 'Cancel' or event == sg.WIN_CLOSED:
                 print("CANCEL seen")
                 break
+            elif event == '-BLEND_MODE-':
+                self.blend_mode_on = not self.blend_mode_on
+                self.window['blend_mode_menu'  ].update(visible =     self.blend_mode_on)
+                self.window['single_color_menu'].update(visible = not self.blend_mode_on)
+
             elif event == '-SET_PIXEL_COLOR-':
-                pixel_color_picked = Color()
-                ret = pixel_color_picked.from_hex(values[event], name='pixel_color_picked')
-                if ret is not False and not pixel_color_picked.compare(self.pixel_color_picked):
+                ret = self.pick_color(hex_code=values[event],
+                                      stored_value=self.pixel_color_picked,
+                                      name='pixel_color_picked')
+                if ret is not False:
+                  self.pixel_color_picked = ret
                   print("Pixel Color picked:", values[event])
-                  self.pixel_color_picked = pixel_color_picked
                   self.window['-set_pixel_color_chooser-'].Update(button_color=(values[event], values[event]))
 
             elif event == '-SET_GROUTING_COLOR-':
-                grouting_color_picked = Color()
-                ret = grouting_color_picked.from_hex(values[event], name='grouting_color_picked')
-                if ret is not False and not grouting_color_picked.compare(self.grouting_color_picked):
-                  print("Grouting Color picked:", values[event], grouting_color_picked, self.grouting_color_picked)
-                  self.grouting_color_picked = grouting_color_picked
+                ret = self.pick_color(hex_code=values[event],
+                                      stored_value=self.grouting_color_picked,
+                                      name='grouting_color_picked')
+                if ret is not False:
+                  self.grouting_color_picked = ret
                   self.window['-set_grouting_color_chooser-'].Update(button_color=(values[event], values[event]))
-                  
-                  image = self.grid.change_grouting_color(self.grouting_color_picked)
-                  self.update_canvas(image)
-                  # self.generate_new_tile(values)
+
+                  self.grid.change_grouting_color(self.grouting_color_picked)
+                  self.update_canvas(self.grid.image)
+            
+            elif event == '-SET_BG_COLOR-':
+                ret = self.pick_color(hex_code=values[event],
+                                      stored_value=self.bg_color_picked, 
+                                      name='bg_color_picked')
+                if ret is not False:
+                  self.bg_color_picked = ret
+                  self.window[f'-bg_color_chooser-'].Update(button_color=(values[event], values[event]))
+            elif event.startswith('-BLEND_COLOR'):
+              event_str = event
+              color_num = event_str.strip("-BLEND_COLOR_PERCENT-")
+              if event.endswith('PERCENT-'):
+                try:
+                  value = int(values[event])
+                  if value>100:
+                    raise ValueError
+                  self.blend_mode_selections[color_num][event] = value
+                  print(f"Updating percent of blend_color{color_num} to {value}")
+                except ValueError:
+                  continue
+              else:
+                # print(f"color event seen :{color_num}")
+                ret = self.pick_color(hex_code=values[event], 
+                            stored_value=self.blend_mode_selections[color_num][event],
+                            name=f'blend_color{color_num}_picked')
+                if ret is not False:
+                  self.blend_mode_selections[color_num][event] = ret
+                  # print(f"Updating blend_color{color_num} to {ret}")
+                  self.window[f'-blend_color_chooser{color_num}-'].Update(button_color=(values[event], values[event]))
+
             elif event in ['-Eraser-', '-Brush-', '-Paint_Bucket-', '-Color_Picker-']:
               print('Radio Button called with ', event)
               self.tool_picked = event
@@ -158,12 +222,17 @@ class App:
                 # print("pixel_color, gr_color is same. no need to do anything")
                 continue 
               else:
-                image = self.grid.color_pixel(self.grid.image, values[event][0], values[event][1], pixel_color_picked)
-                self.update_canvas(image)
+                self.grid.color_pixel(self.grid.image, values[event][0], values[event][1], pixel_color_picked)
+                self.update_canvas(self.grid.image)
 
             elif event == 'Save':
-              self.grid.save()
-              print('Image saved')
+              file_loc = sg.popup_get_file('Save as', no_window=True, modal=True,
+                        default_extension = 'png',
+                        save_as=True, file_types=(('PNG', '.png'), ('JPG', '.jpg')))
+              if file_loc == '':
+                continue
+              print('Saving to:', file_loc)
+              self.grid.save(filename=file_loc)
 
             elif event == '-Generate-':
               print("Generate pressed! tile_height: ", values['-TILE_HEIGHT-'],  "tile_width: ", values['-TILE_WIDTH-'])
@@ -211,7 +280,14 @@ class App:
                       rectangle_width=unit_width, rectangle_height=unit_height,
                       GROUTING_SIZE=grouting_size,
                       vertical_symm=vertical_symm, horizontal_symm=horizontal_symm)
+
+        #update the grouting and the blend/bg colors
         self.tileParams.update_color(GROUTING_COLOR=self.grouting_color_picked)
+        if self.blend_mode_on is True:
+          self.tileParams.update_color(BLEND_MODE_COLORS=self.blend_mode_selections)
+        else:
+          self.tileParams.update_color(SOLID_BG_COLOR=self.bg_color_picked)
+        
         self.grid = Grid(self.tileParams, self.canvas_base_pixel_x, self.canvas_base_pixel_y)
         self.grid.generate_grid()
         self.update_canvas(self.grid.image)
@@ -224,6 +300,17 @@ class App:
     def play(self):
         self.event_loop()
 
+    def pick_color(self, hex_code, stored_value, name=None):
+      color_picked = Color()
+      ret = color_picked.from_hex(hex_code, name='color_picked')
+      if ret is not False and not color_picked.compare(stored_value):
+        print("Color picked:" if name is None else name, hex_code, color_picked, stored_value)
+        return color_picked
+      else:
+        return False
+
+    def collapse(self, layout, key, visible):
+      return sg.pin(sg.Column(layout, key=key, visible=visible))
 
 if (__name__ == "__main__"):
     game = App()

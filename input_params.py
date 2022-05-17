@@ -37,17 +37,29 @@ class TileParams:
         self.GROUTING_COLOR = Color(r=0x80, g=0xbf, b=0xca, name='blue4')
         self.new_color      = Color(r=0xff, g=0xff, b=0x00, name='yellow')
 
-    def update_color(self, PIXEL_COLORS=None, PIXEL_COLORS_p=None, 
+    def update_color(self, BLEND_MODE_COLORS=None, SOLID_BG_COLOR=None,
                         GROUTING_COLOR=None):
-        if PIXEL_COLORS is list:
-            self.PIXEL_COLORS = PIXEL_COLORS
-
-            if PIXEL_COLORS_p is None:
-                self.PIXEL_COLORS_p = [1./len(PIXEL_COLORS) for _ in len(PIXEL_COLORS)]
+        if type(BLEND_MODE_COLORS) is dict:
+            PIXEL_COLORS   = list()
+            PIXEL_COLORS_p = list()
+            sum_perc = 0
+            for i in BLEND_MODE_COLORS:
+                color      = BLEND_MODE_COLORS[i][f'-BLEND_COLOR{i}-']
+                color_perc = BLEND_MODE_COLORS[i][f'-BLEND_COLOR{i}_PERCENT-']
+                if color is None:
+                    continue
+                sum_perc = sum_perc + color_perc
+                PIXEL_COLORS.append  (color)
+                PIXEL_COLORS_p.append(color_perc/100.0)
+            if sum_perc == 100:
+                self.PIXEL_COLORS = PIXEL_COLORS
+                self.PIXEL_COLORS_p = PIXEL_COLORS_p
             else:
-                if len(PIXEL_COLORS_p) == len(PIXEL_COLORS):
-                    self.PIXEL_COLORS_p = PIXEL_COLORS_p
-        
+                print("Sum of blend colors is not 100. Using older colors")
+        elif type(SOLID_BG_COLOR) is Color:
+            self.PIXEL_COLORS   = [SOLID_BG_COLOR]
+            self.PIXEL_COLORS_p = [1]
+            
         if GROUTING_COLOR is not None:
             self.GROUTING_COLOR = GROUTING_COLOR            
 

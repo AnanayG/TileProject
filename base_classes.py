@@ -13,9 +13,9 @@ class Color():
         if hexcode is not None:
             self.from_hex(hexcode=hexcode, name=name)
         else:
-            self.r = r
-            self.b = b
-            self.g = g
+            self.r = r if r is not None else 0
+            self.b = b if b is not None else 0
+            self.g = g if g is not None else 0
             self.name = name
 
     def get_color(self):
@@ -30,9 +30,11 @@ class Color():
         self.g = int(hexcode[2:4],16)
         self.b = int(hexcode[4:],16)
         self.name = 'picked' if name is None else name
-        print(self.name, self.r, self.g, self.b)
+        # print(self.name, self.r, self.g, self.b)
 
     def compare(self, other):
+        if other is None:
+            return False
         if other.r != self.r or \
             self.g != other.g or \
                 self.b != other.b:

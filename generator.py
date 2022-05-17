@@ -150,7 +150,7 @@ class Grid:
         self.rect.color_pixel_and_symmetrize(image, num_width, num_height, pixel_color=self.tileParams.new_color)
 
         self.image = image
-        return image
+        return
         cv2.imshow('Rectangular Pattern-color-changed', image)
         cv2.waitKey(0)
 
@@ -182,14 +182,12 @@ class Grid:
         self.rect.color_pixel_and_symmetrize(image, x,y, 
                     pixel_color=new_color, grouting_color=self.tileParams.GROUTING_COLOR)
         self.image = image
-        return image
 
     def change_grouting_color(self, new_color):
         self.rect.pixel_shape.grouting_color = new_color
         newImage = self.rect.recolorGrouting(self.image, new_color)
         self.image = newImage
         self.tileParams.GROUTING_COLOR = new_color
-        return newImage
 
     def get_pixel_color(self, pixel_x, pixel_y):
         x,y = self.convert_pixel_coordinates_to_unit_coordinates(pixel_x, pixel_y)
@@ -198,9 +196,9 @@ class Grid:
         
         return self.rect.get_unit_color(self.image, x,y)
 
-    def save(self, format='png'):
+    def save(self, filename='image.png'):
         image_rgb = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
-        cv2.imwrite('image.'+format, image_rgb)
+        cv2.imwrite(filename, image_rgb)
 
 if __name__ == "__main__":
     grid = Grid()
