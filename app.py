@@ -151,6 +151,7 @@ class App:
               
               pixel_color, gr_color = self.grid.get_pixel_color(pixel_x=values[event][0], pixel_y=values[event][1])
               if pixel_color is None or gr_color is None:
+                # print("OUT OF BOUNDS")
                 continue
               if pixel_color.compare(pixel_color_picked) is True and \
                   gr_color.compare(self.grouting_color_picked) is True: 

@@ -164,9 +164,9 @@ class Grid:
         pixel_x = pixel_x - self.base_pixel_x
         pixel_y = pixel_y - self.base_pixel_y
 
-        if (pixel_x > self.NEW_TILE_PX_WIDTH or pixel_x < 0):
+        if (pixel_x >= self.NEW_TILE_PX_WIDTH or pixel_x < 0):
             return (None, None)
-        if (pixel_y > self.NEW_TILE_PX_HEIGHT or pixel_y < 0):
+        if (pixel_y >= self.NEW_TILE_PX_HEIGHT or pixel_y < 0):
             return (None, None)
         
         x = pixel_x//self.rect.pixel_width_plus_grout
