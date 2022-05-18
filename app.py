@@ -18,10 +18,11 @@ class App:
                     for i in range(self.blend_mode_color_count)}
         self.bg_color_picked =  Color(hexcode='#808080', name='bg_default')
 
-        self.init_graphics()
         self.init_values()
+        self.init_graphics()
 
     def init_values(self):
+        self.tileParams = TileParams()
         self.pixel_color_picked    = Color(hexcode='#1f77b4', name='default_pixel')
         self.grouting_color_picked = self.tileParams.GROUTING_COLOR
         
@@ -89,8 +90,8 @@ class App:
           [sg.HorizontalSeparator()],
 
           [sg.Frame(layout=[
-              [sg.CBox('Vertical Symmetry',   default=True, key='-VERITICAL_SYMM-' ),
-              sg.CBox('Horizontal Symmetry', default=True, key='-HORIZONTAL_SYMM-')]
+              [sg.CBox('Vertical Symmetry',   default=True, key='-VERITICAL_SYMM-' , enable_events=True),
+               sg.CBox('Horizontal Symmetry', default=True, key='-HORIZONTAL_SYMM-', enable_events=True)]
              ],
              title='Symmetry', relief=sg.RELIEF_SUNKEN, tooltip='Check one or multiple')],
           [sg.HorizontalSeparator()],
@@ -119,11 +120,12 @@ class App:
         ]
         self.window = sg.Window('Application', layout, finalize=True)
 
-        self.init_image()
+        self.gen_new_image()
 
-    def init_image(self):
-        self.tileParams = TileParams()
-        
+    def gen_new_image(self):
+        graph = self.window["-CANVAS-"]
+        graph.erase()
+
         self.grid = Grid(self.tileParams, self.canvas_base_pixel_x, self.canvas_base_pixel_y)
         self.grid.generate_grid()
         self.update_canvas(self.grid.image)
@@ -200,6 +202,11 @@ class App:
                   # print(f"Updating blend_color{color_num} to {ret}")
                   self.window[f'-blend_color_chooser{color_num}-'].Update(button_color=(values[event], values[event]))
 
+            elif event.endswith('_SYMM-'):
+              print(f"{event} called")
+              self.update_tileparams(values)
+              self.grid.update_symm(self.tileParams)
+
             elif event in ['-Eraser-', '-Brush-', '-Paint_Bucket-', '-Color_Picker-']:
               print('Radio Button called with ', event)
               self.tool_picked = event
@@ -236,16 +243,17 @@ class App:
 
             elif event == '-Generate-':
               print("Generate pressed! tile_height: ", values['-TILE_HEIGHT-'],  "tile_width: ", values['-TILE_WIDTH-'])
-              self.generate_new_tile(values)
+              self.update_tileparams(values)
+              self.gen_new_image()
     
-    def generate_new_tile(self, values):
+    def update_tileparams(self, values):
         height      = values['-TILE_HEIGHT-']
         width       = values['-TILE_WIDTH-']
         unit_height = values['-UNIT_HEIGHT-']
         unit_width  = values['-UNIT_WIDTH-']
         grouting_size = values['-GROUTING_SIZE-']
 
-        vertical_symm = values['-VERITICAL_SYMM-']
+        vertical_symm   = values['-VERITICAL_SYMM-']
         horizontal_symm = values['-HORIZONTAL_SYMM-']
 
         try:
@@ -272,9 +280,6 @@ class App:
           grouting_size=int(grouting_size)
         except ValueError:
           grouting_size=None
-        
-        graph = self.window["-CANVAS-"]
-        graph.erase()
 
         self.tileParams.update_params(TILE_WIDTH=width, TILE_HEIGHT=height,
                       rectangle_width=unit_width, rectangle_height=unit_height,
@@ -287,10 +292,6 @@ class App:
           self.tileParams.update_color(BLEND_MODE_COLORS=self.blend_mode_selections)
         else:
           self.tileParams.update_color(SOLID_BG_COLOR=self.bg_color_picked)
-        
-        self.grid = Grid(self.tileParams, self.canvas_base_pixel_x, self.canvas_base_pixel_y)
-        self.grid.generate_grid()
-        self.update_canvas(self.grid.image)
     
     def update_canvas(self, image):
         graph = self.window["-CANVAS-"]

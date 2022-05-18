@@ -19,13 +19,16 @@ class RectanglularGrid():
     def __init__(self, tileParams=None, pixel_shape=None):
         self.tileParams = tileParams
         self.symmetry   = self.tileParams.symmetry
+        self.update_symm(tileParams)
 
+        self.pixel_shape = pixel_shape
+
+    def update_symm(self, tileParams):
+        self.symmetry        = tileParams.symmetry
         self.vertical_symm   = [True, False] if (self.symmetry['vertical'] is True) else [False, False]
         self.horizontal_symm = [False, True] if (self.symmetry['horizontal'] is True) else [False, False]
         self.right_diagonal  = [True, True]  if (self.symmetry['right_diagonal'] is True) else [False, False]
         self.left_diagonal   = [True, True]  if (self.symmetry['left_diagonal'] is True) else [False, False]
-
-        self.pixel_shape = pixel_shape
 
     def resize_image(self, width, height, tileParams):
         #height, width are in mm
@@ -172,6 +175,9 @@ class Grid:
 
         return (x,y)
 
+    def update_symm(self, tileParams):
+        self.rect.update_symm(tileParams)
+    
     def color_pixel(self, image, pixel_x, pixel_y, new_color):
         x,y = self.convert_pixel_coordinates_to_unit_coordinates(pixel_x, pixel_y)
         if x is None or y is None:
