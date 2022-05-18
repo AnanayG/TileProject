@@ -76,8 +76,8 @@ class TileParams:
                 GROUTING_SIZE=None,
                 rectangle_width=None,
                 rectangle_height=None,
-                vertical_symm=None,
-                horizontal_symm=None):
+                vertical_symm=None, horizontal_symm=None,
+                right_d_symm=None, left_d_symm=None):
 
         ##TODO: add support for no_of_pixel (_per_side)
         
@@ -100,5 +100,9 @@ class TileParams:
             self.symmetry['vertical'] = vertical_symm
         if horizontal_symm is not None:
             self.symmetry['horizontal'] = horizontal_symm
+        if right_d_symm is not None:
+            self.symmetry['right_diagonal'] = right_d_symm
+        if left_d_symm is not None:
+            self.symmetry['left_diagonal'] = left_d_symm
         self.calculate_params()
 

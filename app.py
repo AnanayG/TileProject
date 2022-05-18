@@ -90,8 +90,10 @@ class App:
           [sg.HorizontalSeparator()],
 
           [sg.Frame(layout=[
-              [sg.CBox('Vertical Symmetry',   default=True, key='-VERITICAL_SYMM-' , enable_events=True),
-               sg.CBox('Horizontal Symmetry', default=True, key='-HORIZONTAL_SYMM-', enable_events=True)]
+              [sg.CBox('Vertical Symmetry',   default=True , key='-VERITICAL_SYMM-' , enable_events=True, size=(15, 1)),
+               sg.CBox('Horizontal Symmetry', default=True , key='-HORIZONTAL_SYMM-', enable_events=True, size=(15, 1))],
+              [sg.CBox('Right Diagonal',      default=False, key='-RIGHT_D_SYMM-' ,   enable_events=True, size=(15, 1)),
+               sg.CBox('Left Diagonal',       default=False, key='-LEFT_D_SYMM-',     enable_events=True, size=(15, 1))]
              ],
              title='Symmetry', relief=sg.RELIEF_SUNKEN, tooltip='Check one or multiple')],
           [sg.HorizontalSeparator()],
@@ -214,7 +216,7 @@ class App:
               # print(values[event])
               
               if self.tool_picked == '-Eraser-':
-                pixel_color_picked = Color(r=255,g=255,b=255,name='white')
+                pixel_color_picked = self.bg_color_picked
               elif self.tool_picked == '-Brush-':
                 pixel_color_picked = self.pixel_color_picked
               else:
@@ -247,14 +249,16 @@ class App:
               self.gen_new_image()
     
     def update_tileparams(self, values):
-        height      = values['-TILE_HEIGHT-']
-        width       = values['-TILE_WIDTH-']
-        unit_height = values['-UNIT_HEIGHT-']
-        unit_width  = values['-UNIT_WIDTH-']
+        height        = values['-TILE_HEIGHT-']
+        width         = values['-TILE_WIDTH-']
+        unit_height   = values['-UNIT_HEIGHT-']
+        unit_width    = values['-UNIT_WIDTH-']
         grouting_size = values['-GROUTING_SIZE-']
 
         vertical_symm   = values['-VERITICAL_SYMM-']
         horizontal_symm = values['-HORIZONTAL_SYMM-']
+        right_d_symm    = values['-RIGHT_D_SYMM-']
+        left_d_symm     = values['-LEFT_D_SYMM-']
 
         try:
           height=int(height)
@@ -284,7 +288,8 @@ class App:
         self.tileParams.update_params(TILE_WIDTH=width, TILE_HEIGHT=height,
                       rectangle_width=unit_width, rectangle_height=unit_height,
                       GROUTING_SIZE=grouting_size,
-                      vertical_symm=vertical_symm, horizontal_symm=horizontal_symm)
+                      vertical_symm=vertical_symm, horizontal_symm=horizontal_symm,
+                      right_d_symm=right_d_symm, left_d_symm=left_d_symm)
 
         #update the grouting and the blend/bg colors
         self.tileParams.update_color(GROUTING_COLOR=self.grouting_color_picked)

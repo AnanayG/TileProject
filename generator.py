@@ -27,8 +27,8 @@ class RectanglularGrid():
         self.symmetry        = tileParams.symmetry
         self.vertical_symm   = [True, False] if (self.symmetry['vertical'] is True) else [False, False]
         self.horizontal_symm = [False, True] if (self.symmetry['horizontal'] is True) else [False, False]
-        self.right_diagonal  = [True, True]  if (self.symmetry['right_diagonal'] is True) else [False, False]
-        self.left_diagonal   = [True, True]  if (self.symmetry['left_diagonal'] is True) else [False, False]
+        self.left_diagonal   = 'left_diagonal'  if (self.symmetry['left_diagonal' ] is True) else False
+        self.right_diagonal  = 'right_diagonal' if (self.symmetry['right_diagonal'] is True) else False
 
     def resize_image(self, width, height, tileParams):
         #height, width are in mm
@@ -94,13 +94,17 @@ class RectanglularGrid():
         """
         if self.symmetry is None:
             return
-        for symm_rule in [self.vertical_symm,  self.horizontal_symm]:
-            if symm_rule is [False, False]:
+        for symm_rule in [self.vertical_symm,  self.horizontal_symm, self.left_diagonal, self.right_diagonal]:
+            if symm_rule is [False, False] or symm_rule is False:
                 continue
 
-            width_num_reflected  = (self.no_per_width -1- width_num) if symm_rule[0] is True else width_num
-            height_num_reflected = (self.no_per_height-1-height_num) if symm_rule[1] is True else height_num
-            
+            if type(symm_rule) is str:
+                width_num_reflected  = (self.no_per_height-1-height_num) if symm_rule == 'right_diagonal' else height_num
+                height_num_reflected = (self.no_per_width -1- width_num) if symm_rule == 'right_diagonal' else width_num
+            else:
+                width_num_reflected  = (self.no_per_width -1- width_num) if symm_rule[0] is True else width_num
+                height_num_reflected = (self.no_per_height-1-height_num) if symm_rule[1] is True else height_num
+
             #if this reflected pixel is already present in set_, do not process furthur
             if (width_num_reflected, height_num_reflected) in set_:
                 continue
