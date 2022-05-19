@@ -1,6 +1,6 @@
 import numpy
 import PySimpleGUI as sg
-from base_classes import array_to_data, Color
+from base_classes import array_to_data, Color, convert_to_int
 from generator import Grid
 from input_params import TileParams
 
@@ -16,7 +16,10 @@ class App:
         self.blend_mode_selections = {str(i):{f'-BLEND_COLOR{i}-'        :None, 
                                               f'-BLEND_COLOR{i}_PERCENT-':0} 
                     for i in range(self.blend_mode_color_count)}
-        self.bg_color_picked =  Color(hexcode='#808080', name='bg_default')
+        self.bg_color_picked = Color(hexcode='#808080', name='bg_default')
+
+        self.disabled_color = Color(hexcode='#808080', name='bg_default')
+        self.enabled_color  = Color(hexcode='#ffffff', name='bg_default')
 
         self.init_values()
         self.init_graphics()
@@ -56,15 +59,20 @@ class App:
             for i in range(self.blend_mode_color_count)
           ]
 
+        unit_size = [[sg.Text('Pixel Size', font='ANY 15')],
+          [sg.Text('Height: ', size=(10,1)), sg.In(k='-UNIT_HEIGHT-', size=(8,1), enable_events=True)],
+          [sg.Text('Width: ' , size=(10,1)), sg.In(k='-UNIT_WIDTH-' , size=(8,1), enable_events=True)]]
+        unit_number = [[sg.Text('Pixel Number', font='ANY 15')],
+          [sg.Text('Num Height: ', size=(10,1)), sg.In(k='-UNIT_NUM_HEIGHT-', size=(8,1), enable_events=True)],
+          [sg.Text('Num Width: ' , size=(10,1)), sg.In(k='-UNIT_NUM_WIDTH-' , size=(8,1), enable_events=True)]]
+
         left_pane = [
           [sg.Menu(menu_def, tearoff=True)],
           [sg.Text('Tile Size', font='ANY 15')],
           [sg.Text('Height: ', size=(12,1)), sg.In(k='-TILE_HEIGHT-', size=(10,1))],
           [sg.Text('Width: ' , size=(12,1)), sg.In(k='-TILE_WIDTH-' , size=(10,1))],
 
-          [sg.Text('Pixel Size', font='ANY 15')],
-          [sg.Text('Height: ', size=(12,1)), sg.In(k='-UNIT_HEIGHT-', size=(10,1))],
-          [sg.Text('Width: ' , size=(12,1)), sg.In(k='-UNIT_WIDTH-' , size=(10,1))],
+          [sg.Column(unit_size), sg.Column(unit_number)],
 
           [sg.Text('Grouting Size', font='ANY 15'), 
              sg.Slider(range=(1, 5), default_value=1,
@@ -174,7 +182,10 @@ class App:
 
                   self.grid.change_grouting_color(self.grouting_color_picked)
                   self.update_canvas(self.grid.image)
-            
+
+            elif event.startswith('-UNIT_'):
+                self.window[event].Update(background_color=self.enabled_color.get_hex())
+
             elif event == '-SET_BG_COLOR-':
                 ret = self.pick_color(hex_code=values[event],
                                       stored_value=self.bg_color_picked, 
@@ -249,45 +260,26 @@ class App:
               self.gen_new_image()
     
     def update_tileparams(self, values):
-        height        = values['-TILE_HEIGHT-']
-        width         = values['-TILE_WIDTH-']
-        unit_height   = values['-UNIT_HEIGHT-']
-        unit_width    = values['-UNIT_WIDTH-']
-        grouting_size = values['-GROUTING_SIZE-']
+        height        = convert_to_int(values['-TILE_HEIGHT-'])
+        width         = convert_to_int(values['-TILE_WIDTH-'])
+
+        unit_height     = convert_to_int(values['-UNIT_HEIGHT-'])
+        unit_width      = convert_to_int(values['-UNIT_WIDTH-'])
+        unit_num_height = convert_to_int(values['-UNIT_NUM_HEIGHT-'])
+        unit_num_width  = convert_to_int(values['-UNIT_NUM_WIDTH-'])
+
+        grouting_size = convert_to_int(values['-GROUTING_SIZE-'])
 
         vertical_symm   = values['-VERITICAL_SYMM-']
         horizontal_symm = values['-HORIZONTAL_SYMM-']
         right_d_symm    = values['-RIGHT_D_SYMM-']
         left_d_symm     = values['-LEFT_D_SYMM-']
 
-        try:
-          height=int(height)
-        except ValueError:
-          height=None
-
-        try:
-          width=int(width)
-        except ValueError:
-          width=None
-
-        try:
-          unit_height=int(unit_height)
-        except ValueError:
-          unit_height=None
-          
-        try:
-          unit_width=int(unit_width)
-        except ValueError:
-          unit_width=None
-
-        try:
-          grouting_size=int(grouting_size)
-        except ValueError:
-          grouting_size=None
 
         self.tileParams.update_params(TILE_WIDTH=width, TILE_HEIGHT=height,
-                      rectangle_width=unit_width, rectangle_height=unit_height,
                       GROUTING_SIZE=grouting_size,
+                      rectangle_width=unit_width, rectangle_height=unit_height,
+                      num_width=unit_num_width, num_height=unit_num_height,
                       vertical_symm=vertical_symm, horizontal_symm=horizontal_symm,
                       right_d_symm=right_d_symm, left_d_symm=left_d_symm)
 
@@ -297,7 +289,20 @@ class App:
           self.tileParams.update_color(BLEND_MODE_COLORS=self.blend_mode_selections)
         else:
           self.tileParams.update_color(SOLID_BG_COLOR=self.bg_color_picked)
-    
+
+        if self.tileParams.mode == "pixel_size":
+          self.window[f'-UNIT_HEIGHT-'    ].Update(background_color=self.enabled_color.get_hex())
+          self.window[f'-UNIT_WIDTH-'     ].Update(background_color=self.enabled_color.get_hex())
+          self.window[f'-UNIT_NUM_HEIGHT-'].Update(background_color=self.disabled_color.get_hex())
+          self.window[f'-UNIT_NUM_WIDTH-' ].Update(background_color=self.disabled_color.get_hex())
+        else:
+          self.window[f'-UNIT_HEIGHT-'    ].Update(background_color=self.disabled_color.get_hex())
+          self.window[f'-UNIT_WIDTH-'     ].Update(background_color=self.disabled_color.get_hex())
+          self.window[f'-UNIT_NUM_HEIGHT-'].Update(background_color=self.enabled_color.get_hex())
+          self.window[f'-UNIT_NUM_WIDTH-' ].Update(background_color=self.enabled_color.get_hex())
+        self.window['-TILE_WIDTH-' ].Update(self.tileParams.NEW_TILE_PX_WIDTH //self.tileParams.PIXELS_PER_MM)
+        self.window['-TILE_HEIGHT-'].Update(self.tileParams.NEW_TILE_PX_HEIGHT//self.tileParams.PIXELS_PER_MM)
+
     def update_canvas(self, image):
         graph = self.window["-CANVAS-"]
         data = array_to_data(image)

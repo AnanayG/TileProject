@@ -7,8 +7,12 @@ class TileParams:
         self.TILE_HEIGHT = 300
         self.GROUTING_SIZE = 1
 
+        self.no_per_width     = None #will be calculated later
+        self.no_per_height    = None #will be calculated later
+
         self.rectangle_width  = 5
         self.rectangle_height = 5
+        self.mode = "pixel_size"
 
         # GROUTING_SIZE = 4
         # rectangle_width  = 4
@@ -71,11 +75,42 @@ class TileParams:
         self.GROUTING_SIZE_PX = self.GROUTING_SIZE*self.PIXELS_PER_MM
         self.GROUTING_OFFSET  = int(self.GROUTING_SIZE_PX/2)
 
-    def update_params(self, TILE_WIDTH=None,
-                TILE_HEIGHT=None,
+        #height, width are in mm
+        (unit_width, unit_height)= self.set_unit_size()
+        unit_px_width  = unit_width  * self.PIXELS_PER_MM
+        unit_px_height = unit_height * self.PIXELS_PER_MM
+
+        self.pixel_width_plus_grout  = unit_px_width  + self.GROUTING_SIZE_PX
+        self.pixel_height_plus_grout = unit_px_height + self.GROUTING_SIZE_PX
+
+        if self.mode == "pixel_size":
+            self.no_per_width  = int(self.TILE_PX_WIDTH /self.pixel_width_plus_grout)
+            self.no_per_height = int(self.TILE_PX_HEIGHT/self.pixel_height_plus_grout)
+        
+        self.NEW_TILE_PX_WIDTH  = self.no_per_width  * self.pixel_width_plus_grout
+        self.NEW_TILE_PX_HEIGHT = self.no_per_height * self.pixel_height_plus_grout
+        print(f"RESIZING IMAGE TO WIDTH:{self.NEW_TILE_PX_WIDTH}, \
+                                  HEIGHT:{self.NEW_TILE_PX_HEIGHT}")
+
+    def set_unit_size(self):
+        if self.rectangle_width is not None and \
+            self.rectangle_height is not None:
+            self.mode = "pixel_size"
+            return (self.rectangle_width, self.rectangle_height)
+        
+        if self.no_per_width is not None and \
+            self.no_per_height is not None:
+            width  = int(self.TILE_WIDTH/self.no_per_width)  - self.GROUTING_SIZE
+            height = int(self.TILE_WIDTH/self.no_per_height) - self.GROUTING_SIZE
+            if width <0 or height<0:
+                return (None, None)
+            self.mode = "pixel_number"
+            return (width, height)
+
+    def update_params(self, TILE_WIDTH=None, TILE_HEIGHT=None,
                 GROUTING_SIZE=None,
-                rectangle_width=None,
-                rectangle_height=None,
+                rectangle_width=None, rectangle_height=None,
+                num_width=None, num_height=None,
                 vertical_symm=None, horizontal_symm=None,
                 right_d_symm=None, left_d_symm=None):
 
@@ -91,9 +126,17 @@ class TileParams:
             self.TILE_HEIGHT     = TILE_HEIGHT
         if GROUTING_SIZE is not None:
             self.GROUTING_SIZE   = GROUTING_SIZE
-        if rectangle_width is not None:
+        
+        if num_width is not None and num_height is not None:
+            self.no_per_width     = num_width
+            self.no_per_height    = num_height
+            self.rectangle_width  = None
+            self.rectangle_height = None
+
+        if rectangle_width is not None and rectangle_height is not None:
+            self.no_per_width     = None
+            self.no_per_height    = None
             self.rectangle_width  = rectangle_width
-        if rectangle_height is not None:
             self.rectangle_height = rectangle_height
 
         if vertical_symm is not None:
@@ -104,5 +147,6 @@ class TileParams:
             self.symmetry['right_diagonal'] = right_d_symm
         if left_d_symm is not None:
             self.symmetry['left_diagonal'] = left_d_symm
+        
         self.calculate_params()
 

@@ -41,6 +41,10 @@ class Color():
             return False
         return True
 
+    def get_hex(self):
+        hex_code = '#{0:x}{1:x}{2:x}'.format(self.r, self.g, self.b)
+        return hex_code
+
 @dataclass
 class Point():
     x: int
@@ -64,3 +68,10 @@ def array_to_data(array):
         im.save(output, format="PNG")
         data = output.getvalue()
     return data
+
+def convert_to_int(var):
+    try:
+        var=int(var)
+    except ValueError:
+        var=None
+    return var

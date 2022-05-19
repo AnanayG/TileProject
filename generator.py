@@ -18,6 +18,11 @@ if args.Seed:
 class RectanglularGrid():
     def __init__(self, tileParams=None, pixel_shape=None):
         self.tileParams = tileParams
+        self.no_per_width  = tileParams.no_per_width
+        self.no_per_height = tileParams.no_per_height
+        self.pixels_grid = [[None for _ in range(self.tileParams.no_per_height)] 
+                                  for _ in range(self.tileParams.no_per_width)]
+
         self.symmetry   = self.tileParams.symmetry
         self.update_symm(tileParams)
 
@@ -30,28 +35,12 @@ class RectanglularGrid():
         self.left_diagonal   = 'left_diagonal'  if (self.symmetry['left_diagonal' ] is True) else False
         self.right_diagonal  = 'right_diagonal' if (self.symmetry['right_diagonal'] is True) else False
 
-    def resize_image(self, width, height, tileParams):
-        #height, width are in mm
-        pixel_width  = width  * tileParams.PIXELS_PER_MM
-        pixel_height = height * tileParams.PIXELS_PER_MM
-
-        self.pixel_width_plus_grout  = pixel_width + tileParams.GROUTING_SIZE_PX
-        self.pixel_height_plus_grout = pixel_height+ tileParams.GROUTING_SIZE_PX
-
-        self.no_per_width  = int(tileParams.TILE_PX_WIDTH/self.pixel_width_plus_grout)
-        self.no_per_height = int(tileParams.TILE_PX_HEIGHT/self.pixel_height_plus_grout)
-        self.pixels_grid = [[None for _ in range(self.no_per_height)] for _ in range(self.no_per_width)]
-
-        NEW_TILE_PX_WIDTH = self.no_per_width*self.pixel_width_plus_grout
-        NEW_TILE_PX_HEIGHT = self.no_per_height*self.pixel_height_plus_grout
-        print(f"RESIZING IMAGE TO WIDTH:{NEW_TILE_PX_WIDTH}, height:{NEW_TILE_PX_HEIGHT}")
-
-        return (NEW_TILE_PX_WIDTH, NEW_TILE_PX_HEIGHT)
 
     def get_unit_color(self, image, width_num, height_num):
-        # base_width  = width_num *self.pixel_width_plus_grout
-        # base_height = height_num*self.pixel_height_plus_grout
-        # center = Point(base_width + (self.pixel_width_plus_grout/2), base_height + (self.pixel_height_plus_grout/2))
+        # base_width  = width_num *self.tileParams.pixel_width_plus_grout
+        # base_height = height_num*self.tileParams.pixel_height_plus_grout
+        # center = Point(base_width + (self.tileParams.pixel_width_plus_grout/2), 
+        #                base_height + (self.tileParams.pixel_height_plus_grout/2))
         # coordi = center.get_point()
 
         # # note: height and width are reversed
@@ -66,18 +55,19 @@ class RectanglularGrid():
         if height_num >= self.no_per_height or height_num<0:
             raise ValueError("height num outside range " + f"no:{height_num} total:{self.no_per_height}")
         
-        base_width  = width_num *self.pixel_width_plus_grout
-        base_height = height_num*self.pixel_height_plus_grout
+        base_width  = width_num * self.tileParams.pixel_width_plus_grout
+        base_height = height_num* self.tileParams.pixel_height_plus_grout
 
-        center = Point(base_width + (self.pixel_width_plus_grout/2), base_height + (self.pixel_height_plus_grout/2))
+        center = Point(base_width  + (self.tileParams.pixel_width_plus_grout/2), 
+                       base_height + (self.tileParams.pixel_height_plus_grout/2))
 
         if grouting_color is None:
             grouting_color = self.tileParams.GROUTING_COLOR
         pixel = self.pixel_shape(center_point=center,
                                  pixel_color=pixel_color, 
                                  grouting_color=grouting_color, 
-                                 pixel_width_plus_grout=self.pixel_width_plus_grout,
-                                 pixel_height_plus_grout=self.pixel_height_plus_grout)
+                                 pixel_width_plus_grout =self.tileParams.pixel_width_plus_grout,
+                                 pixel_height_plus_grout=self.tileParams.pixel_height_plus_grout)
         pixel.draw_grouting(image)
         pixel.draw_pixel(image, self.tileParams)
         self.pixels_grid[width_num][height_num] = pixel
@@ -138,13 +128,10 @@ class Grid:
         self.rect = RectanglularGrid(tileParams  = self.tileParams,
                                      pixel_shape = RectangularPixel)
 
-        #shortens the tile to the nearest multiple of pixels
-        self.NEW_TILE_PX_WIDTH, self.NEW_TILE_PX_HEIGHT = self.rect.resize_image(self.tileParams.rectangle_width,
-                                                                                 self.tileParams.rectangle_height,
-                                                                                 tileParams=self.tileParams)
 
         #blank image
-        image = np.zeros((self.NEW_TILE_PX_HEIGHT+1, self.NEW_TILE_PX_WIDTH+1, 3), np.uint8) # height, width order is reversed
+        image = np.zeros((self.tileParams.NEW_TILE_PX_HEIGHT+1, self.tileParams.NEW_TILE_PX_WIDTH+1, 3), 
+                                                        np.uint8) # height, width order is reversed
         
         #this creates blend pattern
         self.rect.techniqueBlend(image)
@@ -169,13 +156,13 @@ class Grid:
         pixel_x = pixel_x - self.base_pixel_x
         pixel_y = pixel_y - self.base_pixel_y
 
-        if (pixel_x >= self.NEW_TILE_PX_WIDTH or pixel_x < 0):
+        if (pixel_x >= self.tileParams.NEW_TILE_PX_WIDTH or pixel_x < 0):
             return (None, None)
-        if (pixel_y >= self.NEW_TILE_PX_HEIGHT or pixel_y < 0):
+        if (pixel_y >= self.tileParams.NEW_TILE_PX_HEIGHT or pixel_y < 0):
             return (None, None)
         
-        x = pixel_x//self.rect.pixel_width_plus_grout
-        y = pixel_y//self.rect.pixel_height_plus_grout
+        x = pixel_x//self.tileParams.pixel_width_plus_grout
+        y = pixel_y//self.tileParams.pixel_height_plus_grout
 
         return (x,y)
 
