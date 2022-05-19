@@ -42,7 +42,7 @@ class Color():
         return True
 
     def get_hex(self):
-        hex_code = '#{0:x}{1:x}{2:x}'.format(self.r, self.g, self.b)
+        hex_code = '#{0:02x}{1:02x}{2:02x}'.format(self.r, self.g, self.b)
         return hex_code
 
 @dataclass

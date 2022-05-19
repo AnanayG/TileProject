@@ -108,7 +108,7 @@ class App:
 
           [sg.Radio('Brush',        'tool_name', key='-Brush-',        enable_events=True, default=True),
            sg.Radio('Eraser',       'tool_name', key='-Eraser-',       enable_events=True),
-           sg.Radio('Paint Bucket', 'tool_name', key='-Paint_Bucket-', enable_events=True),
+          #  sg.Radio('Paint Bucket', 'tool_name', key='-Paint_Bucket-', enable_events=True),
            sg.Radio('Color Picker', 'tool_name', key='-Color_Picker-', enable_events=True)],
           [sg.HorizontalSeparator()],
 
@@ -226,14 +226,21 @@ class App:
             elif event == '-CANVAS-':
               # print(values[event])
               
+              pixel_color, gr_color = self.grid.get_pixel_color(pixel_x=values[event][0], pixel_y=values[event][1])
+
               if self.tool_picked == '-Eraser-':
                 pixel_color_picked = self.bg_color_picked
               elif self.tool_picked == '-Brush-':
                 pixel_color_picked = self.pixel_color_picked
-              else:
+              elif self.tool_picked == '-Color_Picker-':
+                self.window['-SET_PIXEL_COLOR-'].Update(pixel_color.get_hex())
+                self.window['-set_pixel_color_chooser-'].Update(button_color=
+                                (pixel_color.get_hex(), pixel_color.get_hex()))
+                self.pixel_color_picked = pixel_color
+                continue
+              elif self.tool_picked == '-Paint_Bucket-':
                 continue
               
-              pixel_color, gr_color = self.grid.get_pixel_color(pixel_x=values[event][0], pixel_y=values[event][1])
               if pixel_color is None or gr_color is None:
                 # print("OUT OF BOUNDS")
                 continue
