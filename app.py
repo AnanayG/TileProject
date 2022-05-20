@@ -185,6 +185,8 @@ class App:
 
             elif event.startswith('-UNIT_'):
                 self.window[event].Update(background_color=self.enabled_color.get_hex())
+                mode = "pixel_number" if "NUM" in event else "pixel_size"
+                self.update_unit_options_en_disable(mode)
 
             elif event == '-SET_BG_COLOR-':
                 ret = self.pick_color(hex_code=values[event],
@@ -297,18 +299,25 @@ class App:
         else:
           self.tileParams.update_color(SOLID_BG_COLOR=self.bg_color_picked)
 
-        if self.tileParams.mode == "pixel_size":
+        self.update_unit_options_en_disable(self.tileParams.mode)
+        self.window['-TILE_WIDTH-' ].Update(self.tileParams.NEW_TILE_PX_WIDTH //self.tileParams.PIXELS_PER_MM)
+        self.window['-TILE_HEIGHT-'].Update(self.tileParams.NEW_TILE_PX_HEIGHT//self.tileParams.PIXELS_PER_MM)
+
+    def update_unit_options_en_disable(self, mode):
+        if mode == "pixel_size":
           self.window[f'-UNIT_HEIGHT-'    ].Update(background_color=self.enabled_color.get_hex())
           self.window[f'-UNIT_WIDTH-'     ].Update(background_color=self.enabled_color.get_hex())
           self.window[f'-UNIT_NUM_HEIGHT-'].Update(background_color=self.disabled_color.get_hex())
           self.window[f'-UNIT_NUM_WIDTH-' ].Update(background_color=self.disabled_color.get_hex())
+          self.window[f'-UNIT_NUM_HEIGHT-'].Update("")
+          self.window[f'-UNIT_NUM_WIDTH-' ].Update("")
         else:
           self.window[f'-UNIT_HEIGHT-'    ].Update(background_color=self.disabled_color.get_hex())
           self.window[f'-UNIT_WIDTH-'     ].Update(background_color=self.disabled_color.get_hex())
           self.window[f'-UNIT_NUM_HEIGHT-'].Update(background_color=self.enabled_color.get_hex())
           self.window[f'-UNIT_NUM_WIDTH-' ].Update(background_color=self.enabled_color.get_hex())
-        self.window['-TILE_WIDTH-' ].Update(self.tileParams.NEW_TILE_PX_WIDTH //self.tileParams.PIXELS_PER_MM)
-        self.window['-TILE_HEIGHT-'].Update(self.tileParams.NEW_TILE_PX_HEIGHT//self.tileParams.PIXELS_PER_MM)
+          self.window[f'-UNIT_HEIGHT-'    ].Update("")
+          self.window[f'-UNIT_WIDTH-'     ].Update("")
 
     def update_canvas(self, image):
         graph = self.window["-CANVAS-"]
