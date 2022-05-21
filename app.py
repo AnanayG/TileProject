@@ -117,11 +117,6 @@ class App:
           #  sg.Radio('Paint Bucket', 'tool_name', key='-Paint_Bucket-', enable_events=True),
            sg.Radio('Color Picker', 'tool_name', key='-Color_Picker-', enable_events=True)],
           [sg.HorizontalSeparator()],
-
-          [sg.Radio('Rotated',  'tile_mode', key='-TILED_Rotated-' , enable_events=True, default=True),
-           sg.Radio('Repeated', 'tile_mode', key='-TILED_Repeated-', enable_events=True)],
-          [sg.Button(button_text='Update titled view', key='-UPDATE_TITLED_VIEW-')],
-          [sg.HorizontalSeparator()],
           
           [sg.Ok(button_text='Generate', key='-Generate-'), sg.Cancel()]]
         
@@ -143,8 +138,15 @@ class App:
           background_color='lightblue',
           drag_submits=False)
         
+        right_pane = [
+          [sg.Button(button_text='Update titled view', key='-UPDATE_TITLED_VIEW-')],
+          [sg.Radio('Rotated',  'tile_mode', key='-TILED_Rotated-' , enable_events=True, default=True),
+           sg.Radio('Repeated', 'tile_mode', key='-TILED_Repeated-', enable_events=True)],
+          [sg.HorizontalSeparator()],
+          [tiled_canvas]
+        ]
         layout = [
-          [sg.Column(left_pane), work_canvas, tiled_canvas]
+          [sg.Column(left_pane), work_canvas, sg.Column(right_pane)]
         ]
         self.window = sg.Window('Application', layout, finalize=True)
 
