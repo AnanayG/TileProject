@@ -16,10 +16,10 @@ class App:
         self.tiled_base_pixel_x = 0
         self.tiled_base_pixel_y = 0
 
-        self.keyboard_mapping_to_event = {'b':'-Brush-' , 'B':'-Brush-',
+        self.keyboard_mapping_to_event = {'r':'-Brush-' , 'R':'-Brush-',
                                  'e':'-Eraser-', 'E':'-Eraser-',
                                  'c':'-Color_Picker-', 'C':'-Color_Picker-',
-                                 'z':'-UPDATE_TITLED_VIEW-', 'Z':'-UPDATE_TITLED_VIEW-'}
+                                 ' ':'-UPDATE_TITLED_VIEW-'}
         self.blend_mode_color_count = 5
         self.blend_mode_on = True
         self.blend_mode_selections = {str(i):{f'-BLEND_COLOR{i}-'        :None, 
