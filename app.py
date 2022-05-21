@@ -285,10 +285,10 @@ class App:
                 continue
               if event == "Save Tiled View":
                 print('Saving tiled view to:', file_loc)
-                self.grid.save(filename=file_loc)
+                self.grid.save_tiled_view(filename=file_loc)
               else:
                 print('Saving to:', file_loc)
-                self.grid.save_tiled_view(filename=file_loc)
+                self.grid.save(filename=file_loc)
 
             elif event == '-UPDATE_TITLED_VIEW-':
               self.update_titled_view(self.grid.image)
