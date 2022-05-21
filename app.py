@@ -16,6 +16,10 @@ class App:
         self.tiled_base_pixel_x = 0
         self.tiled_base_pixel_y = 0
 
+        self.keyboard_mapping_to_event = {'b':'-Brush-' , 'B':'-Brush-',
+                                 'e':'-Eraser-', 'E':'-Eraser-',
+                                 'c':'-Color_Picker-', 'C':'-Color_Picker-',
+                                 'z':'-UPDATE_TITLED_VIEW-', 'Z':'-UPDATE_TITLED_VIEW-'}
         self.blend_mode_color_count = 5
         self.blend_mode_on = True
         self.blend_mode_selections = {str(i):{f'-BLEND_COLOR{i}-'        :None, 
@@ -174,6 +178,12 @@ class App:
             elif (past_event is not None and event != past_event) or \
                   event in ['-set_pixel_color_chooser-']:
               past_event = None
+
+            #if the event if a KEYBOARD INPUT then change the event variable
+            if event in self.keyboard_mapping_to_event.keys():
+              event = self.keyboard_mapping_to_event[event]
+              if event != "-UPDATE_TITLED_VIEW-":
+                self.window[event].Update(value=True)
 
             if event == 'Cancel' or event == sg.WIN_CLOSED:
                 print("CANCEL seen")
