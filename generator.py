@@ -189,6 +189,10 @@ class Grid:
         image_rgb = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
         cv2.imwrite(filename, image_rgb)
 
+    def save_tiled_view(self, filename='image.png'):
+        image_rgb = cv2.cvtColor(self.tiled_image, cv2.COLOR_BGR2RGB)
+        cv2.imwrite(filename, image_rgb)
+
 if __name__ == "__main__":
     grid = Grid()
     grid.generate_grid()

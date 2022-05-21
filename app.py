@@ -44,7 +44,7 @@ class App:
                               drag_submits=False,
                               background_color='lightblue')
         # ------ Menu Definition ------ #
-        menu_def = [['&File', ['&Open', '&Save', 'E&xit', 'Properties']],
+        menu_def = [['&File', ['&Open', '&Save', 'Save &Tiled View', 'E&xit', 'Properties']],
                     ['&Edit', ['Paste', ['Special', 'Normal', ], 'Undo'], ],
                     ['&Help', '&About...'], ]
 
@@ -277,14 +277,18 @@ class App:
                 self.grid.color_pixel(self.grid.image, values[event][0], values[event][1], pixel_color_picked)
                 self.update_canvas(self.grid.image)
 
-            elif event == 'Save':
+            elif event.startswith('Save'):
               file_loc = sg.popup_get_file('Save as', no_window=True, modal=True,
                         default_extension = 'png',
                         save_as=True, file_types=(('PNG', '.png'), ('JPG', '.jpg')))
               if file_loc == '':
                 continue
-              print('Saving to:', file_loc)
-              self.grid.save(filename=file_loc)
+              if event == "Save Tiled View":
+                print('Saving tiled view to:', file_loc)
+                self.grid.save(filename=file_loc)
+              else:
+                print('Saving to:', file_loc)
+                self.grid.save(filename=file_loc)
 
             elif event == '-UPDATE_TITLED_VIEW-':
               self.update_titled_view(self.grid.image)
