@@ -9,7 +9,7 @@ def crop_image(image, width=None, height=None):
         return image[0:width][:]
     return image[0:width, 0:height]
 
-def image_tiled(image, mode="repeated", row_repeat=2,  col_repeat=2):
+def image_tiled(image, mode='-TILED_Repeated-', row_repeat=2,  col_repeat=2):
     # TODO: shrink image by the factor and display
     #       add zoom functionality
 
@@ -19,11 +19,11 @@ def image_tiled(image, mode="repeated", row_repeat=2,  col_repeat=2):
 
     big_image = np.zeros(((row_repeat*i_width)+1, (col_repeat*i_height)+1, 3), np.uint8)
 
-    if mode=="repeated":
+    if mode=='-TILED_Repeated-':
         for i in range(row_repeat):
             for j in range(col_repeat):
                 big_image[i*width:(i+1)*width, j*height:(j+1)*height][:] = image
-    if mode=="rotated":
+    elif mode=='-TILED_Rotated-':
         # doesn't factor row_repeat and col_repeat into account, right now - TODO
         horizontally_flipped_image = np.flip(image, 1)
         veritcally_flipped_image   = np.flip(image, 0)

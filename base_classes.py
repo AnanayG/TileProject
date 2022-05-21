@@ -62,8 +62,10 @@ class Point():
         else:
             return Point(int(self.x + x_off), int(self.y + y_off))
 
-def array_to_data(array):
+def array_to_data(array, resize=None):
     im = Image.fromarray(array)
+    if resize is not None:
+        im = im.resize(resize)
     with BytesIO() as output:
         im.save(output, format="PNG")
         data = output.getvalue()

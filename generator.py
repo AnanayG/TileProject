@@ -142,15 +142,9 @@ class Grid:
         self.rect.color_pixel_and_symmetrize(image, num_width, num_height, pixel_color=self.tileParams.new_color)
 
         self.image = image
-        return
-        cv2.imshow('Rectangular Pattern-color-changed', image)
-        cv2.waitKey(0)
 
-        big_image = image_tiled(image, mode="rotated")
-        cv2.imshow('Repeated', big_image)
-        cv2.waitKey(0)
-
-        cv2.destroyAllWindows()
+    def update_tiled_image(self, image, mode="-TILED_Repeated-"):
+        self.tiled_image = image_tiled(image, mode=mode)
 
     def convert_pixel_coordinates_to_unit_coordinates(self, pixel_x, pixel_y):
         pixel_x = pixel_x - self.base_pixel_x

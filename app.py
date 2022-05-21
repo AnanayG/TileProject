@@ -8,8 +8,13 @@ from input_params import TileParams
 
 class App:
     def __init__(self):
+        self.canvas_dimensions = [800, 1000]
         self.canvas_base_pixel_x = 20
-        self.canvas_base_pixel_y = 45
+        self.canvas_base_pixel_y = 45 
+
+        self.tiled_view_dimensions = [400,400]
+        self.tiled_base_pixel_x = 0
+        self.tiled_base_pixel_y = 0
 
         self.blend_mode_color_count = 5
         self.blend_mode_on = True
@@ -30,6 +35,7 @@ class App:
         self.grouting_color_picked = self.tileParams.GROUTING_COLOR
         
         self.tool_picked = '-Brush-'
+        self.tiled_view_mode = '-TILED_Rotated-'
     
     def init_graphics(self):
         self.graph = sg.Graph((500, 500), (0, 0), (450, 450),
@@ -112,21 +118,33 @@ class App:
            sg.Radio('Color Picker', 'tool_name', key='-Color_Picker-', enable_events=True)],
           [sg.HorizontalSeparator()],
 
+          [sg.Radio('Rotated',  'tile_mode', key='-TILED_Rotated-' , enable_events=True, default=True),
+           sg.Radio('Repeated', 'tile_mode', key='-TILED_Repeated-', enable_events=True)],
+          [sg.Button(button_text='Update titled view', key='-UPDATE_TITLED_VIEW-')],
+          [sg.HorizontalSeparator()],
+          
           [sg.Ok(button_text='Generate', key='-Generate-'), sg.Cancel()]]
         
-        width, height = 800, 1000
-
         work_canvas = sg.Graph(
-          canvas_size=(width, height),
-          graph_bottom_left=(0, height),
-          graph_top_right=(width, 0),
+          canvas_size=(self.canvas_dimensions[0], self.canvas_dimensions[1]),
+          graph_bottom_left=(0, self.canvas_dimensions[1]),
+          graph_top_right=(self.canvas_dimensions[0], 0),
           key="-CANVAS-",
           change_submits=True,  # mouse click events
           background_color='lightblue',
           drag_submits=True)
         
+        tiled_canvas = sg.Graph(
+          canvas_size=(self.tiled_view_dimensions[0], self.tiled_view_dimensions[1]),
+          graph_bottom_left=(0, self.tiled_view_dimensions[1]),
+          graph_top_right=(self.tiled_view_dimensions[0], 0),
+          key="-TILED_CANVAS-",
+          change_submits=False,  # mouse click events
+          background_color='lightblue',
+          drag_submits=False)
+        
         layout = [
-          [sg.Column(left_pane), work_canvas]
+          [sg.Column(left_pane), work_canvas, tiled_canvas]
         ]
         self.window = sg.Window('Application', layout, finalize=True)
 
@@ -225,6 +243,9 @@ class App:
             elif event in ['-Eraser-', '-Brush-', '-Paint_Bucket-', '-Color_Picker-']:
               print('Radio Button called with ', event)
               self.tool_picked = event
+            elif event.startswith('-TILED_'):
+              print('Tiled view changed to ', event)
+              self.tiled_view_mode = event
             elif event == '-CANVAS-':
               # print(values[event])
               
@@ -263,6 +284,8 @@ class App:
               print('Saving to:', file_loc)
               self.grid.save(filename=file_loc)
 
+            elif event == '-UPDATE_TITLED_VIEW-':
+              self.update_titled_view(self.grid.image)
             elif event == '-Generate-':
               print("Generate pressed! tile_height: ", values['-TILE_HEIGHT-'],  "tile_width: ", values['-TILE_WIDTH-'])
               self.update_tileparams(values)
@@ -323,6 +346,13 @@ class App:
         graph = self.window["-CANVAS-"]
         data = array_to_data(image)
         graph.draw_image(data=data, location=(self.canvas_base_pixel_x, self.canvas_base_pixel_y))
+
+    def update_titled_view(self, image):
+        graph = self.window["-TILED_CANVAS-"]
+        self.grid.update_tiled_image(image, mode=self.tiled_view_mode)
+        data = array_to_data(self.grid.tiled_image, 
+                      resize=self.tiled_view_dimensions)
+        graph.draw_image(data=data, location=(self.tiled_base_pixel_x, self.tiled_base_pixel_y))
 
     def play(self):
         self.event_loop()
