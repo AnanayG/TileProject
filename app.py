@@ -148,7 +148,7 @@ class App:
         layout = [
           [sg.Column(left_pane), work_canvas, sg.Column(right_pane)]
         ]
-        self.window = sg.Window('Application', layout, finalize=True)
+        self.window = sg.Window('Application', layout, finalize=True, resizable=True, return_keyboard_events=True)
 
         self.gen_new_image()
 
@@ -278,7 +278,7 @@ class App:
                 self.update_canvas(self.grid.image)
 
             elif event.startswith('Save'):
-              file_loc = sg.popup_get_file('Save as', no_window=True, modal=True,
+              file_loc = sg.popup_get_file(event, no_window=True, modal=True,
                         default_extension = 'png',
                         save_as=True, file_types=(('PNG', '.png'), ('JPG', '.jpg')))
               if file_loc == '':
