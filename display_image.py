@@ -1,5 +1,25 @@
 import numpy as np
 import cv2
+import tkinter as tk
+
+def colorSelectorTkWindow():
+    root = tk.Toplevel()
+
+    try:
+        root.attributes('-alpha', 0)  # hide window while building it. makes for smoother 'paint'
+        try:
+            root.wm_overrideredirect(True)
+        except Exception as e:
+            print('* Error performing wm_overrideredirect in get file *', e)
+        root.withdraw()
+    except:
+        pass
+
+    color = tk.colorchooser.askcolor(parent=root)  # show the 'get file' dialog box
+    color = color[1]  # save only the #RRGGBB portion
+    root.destroy()
+
+    return color
 
 def crop_image(image, width=None, height=None):
     if width is None and height is None:

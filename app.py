@@ -1,4 +1,5 @@
 from turtle import update
+from display_image import colorSelectorTkWindow
 import numpy
 import PySimpleGUI as sg
 from base_classes import array_to_data, Color, convert_to_int
@@ -53,7 +54,7 @@ class App:
                               background_color='lightblue')
         # ------ Menu Definition ------ #
         menu_def = [['&File', ['&Open', '&Save', 'Save &Tiled View', 'E&xit', 'Properties']],
-                    ['&Edit', ['Paste', ['Special', 'Normal', ], 'Undo'], ],
+                    ['&Edit', ['Change &Canvas Color', 'Paste', ['Special', 'Normal', ], 'Undo'], ],
                     ['&Help', '&About...'], ]
 
         # ------ EITHER THIS  ------ #
@@ -322,6 +323,10 @@ class App:
               else:
                 print('Saving to:', file_loc)
                 self.grid.save(filename=file_loc)
+            elif event == 'Change Canvas Color':
+              color = colorSelectorTkWindow()
+              print("Canvas Bg Color selected:{}".format(color))
+              self.window['-CANVAS-'].Update(background_color=color)
 
             elif event == '-UPDATE_TITLED_VIEW-':
               self.update_titled_view(self.grid.image)
