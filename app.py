@@ -1,10 +1,9 @@
-from turtle import update
-from display_image import colorSelectorTkWindow
-import numpy
 import PySimpleGUI as sg
 from base_classes import array_to_data, Color, convert_to_int
 from generator import Grid
+from display_image import colorSelectorTkWindow, about_me
 from input_params import TileParams
+import pickle
 
 # sg.theme('Dark Teal')
 
@@ -59,7 +58,7 @@ class App:
                               drag_submits=False,
                               background_color='lightblue')
         # ------ Menu Definition ------ #
-        menu_def = [['&File', ['&Open', '&Save', 'Save &Tiled View', 'E&xit', 'Properties']],
+        menu_def = [['&File', ['&Load PTG', '&Save Image', 'Save &Tiled Image', 'Save &PTG','E&xit']],
                     ['&Edit', ['Change &Canvas Color', 'Paste', ['Special', 'Normal', ], 'Undo'], ],
                     ['&Help', '&About...'], ]
 
@@ -216,9 +215,11 @@ class App:
               if event != "-UPDATE_TITLED_VIEW-":
                 self.window[event].Update(value=True)
 
-            if event == 'Cancel' or event == sg.WIN_CLOSED:
+            if event in ['Cancel', 'Exit'] or event == sg.WIN_CLOSED:
                 print("CANCEL seen")
                 break
+            if event == 'About...':
+                about_me()
             elif event == '-BLEND_MODE-':
                 self.blend_mode_on = not self.blend_mode_on
                 self.window['blend_mode_menu'  ].update(visible =     self.blend_mode_on)
@@ -343,17 +344,35 @@ class App:
                 self.update_canvas(self.grid.image)
 
             elif event.startswith('Save'):
-              file_loc = sg.popup_get_file(event, no_window=True, modal=True,
-                        default_extension = 'png',
-                        save_as=True, file_types=(('PNG', '.png'), ('JPG', '.jpg')))
+              if 'Image' in event:
+                file_loc = sg.popup_get_file(event, no_window=True, modal=True,
+                          default_extension = 'png',
+                          save_as=True, file_types=(('PNG', '.png'), ('JPG', '.jpg')))
+              else:
+                file_loc = sg.popup_get_file(event, no_window=True, modal=True,
+                          default_extension = 'ptg',
+                          save_as=True, file_types=[('PTG', '.ptg')])
+
               if file_loc == '':
                 continue
-              if event == "Save Tiled View":
+              if event == "Save Tiled Image":
                 print('Saving tiled view to:', file_loc)
                 self.grid.save_tiled_view(filename=file_loc)
+              elif event == "Save PTG":
+                print('Saving PTG to:', file_loc)
+                self.save_ptg(file_loc)
               else:
                 print('Saving to:', file_loc)
-                self.grid.save(filename=file_loc)
+                self.grid.save_image(filename=file_loc)
+            elif event=='Load PTG':
+                file_loc = sg.popup_get_file(event, no_window=True, modal=True,
+                          default_extension = 'ptg',
+                          save_as=False, file_types=[('PTG', '.ptg')])
+                if file_loc == '':
+                  continue
+                print('Loading PTG from:', file_loc)
+                self.load_ptg(file_loc)
+
             elif event == 'Change Canvas Color':
               color = colorSelectorTkWindow()
               print("Canvas Bg Color selected:{}".format(color))
@@ -366,7 +385,7 @@ class App:
               print("Generate pressed! tile_height: ", values['-TILE_HEIGHT-'],  "tile_width: ", values['-TILE_WIDTH-'])
               self.update_tileparams(values)
               self.gen_new_image()
-    
+
     def update_tileparams(self, values):
         height        = convert_to_int(values['-TILE_HEIGHT-'])
         width         = convert_to_int(values['-TILE_WIDTH-'])
@@ -398,19 +417,9 @@ class App:
         else:
           self.tileParams.update_color(SOLID_BG_COLOR=self.bg_color_picked)
 
-        self.update_unit_options_en_disable(self.tileParams.mode)
-        self.window['-TILE_WIDTH-' ].Update(self.tileParams.NEW_TILE_PX_WIDTH //self.tileParams.PIXELS_PER_MM)
-        self.window['-TILE_HEIGHT-'].Update(self.tileParams.NEW_TILE_PX_HEIGHT//self.tileParams.PIXELS_PER_MM)
-        if self.tileParams.NEW_TILE_PX_WIDTH != self.tileParams.NEW_TILE_PX_HEIGHT:
-          self.window['-TILED_Rotated-'].Update(disabled=True)
-          self.tiled_view_mode = '-TILED_Mirrored-'
-          self.window['-TILED_Mirrored-'].Update(True)
-          self.view_rotated_view_options = False
-          self.window['-TILED_Rotated_options-'].update(visible=self.view_rotated_view_options)
-        else:
-          self.window['-TILED_Rotated-'].Update(disabled=False)
+        self.update_window_from_tileparams()
 
-    def update_unit_options_en_disable(self, mode):
+    def update_unit_options_en_disable(self, mode, new_load=False):
         if mode == "pixel_size":
           self.window[f'-UNIT_HEIGHT-'    ].Update(background_color=self.enabled_color.get_hex())
           self.window[f'-UNIT_WIDTH-'     ].Update(background_color=self.enabled_color.get_hex())
@@ -418,6 +427,9 @@ class App:
           self.window[f'-UNIT_NUM_WIDTH-' ].Update(background_color=self.disabled_color.get_hex())
           self.window[f'-UNIT_NUM_HEIGHT-'].Update("")
           self.window[f'-UNIT_NUM_WIDTH-' ].Update("")
+          if new_load is True:
+            self.window['-UNIT_WIDTH-' ].Update(self.tileParams.rectangle_width)
+            self.window['-UNIT_HEIGHT-'].Update(self.tileParams.rectangle_height)
         else:
           self.window[f'-UNIT_HEIGHT-'    ].Update(background_color=self.disabled_color.get_hex())
           self.window[f'-UNIT_WIDTH-'     ].Update(background_color=self.disabled_color.get_hex())
@@ -425,6 +437,9 @@ class App:
           self.window[f'-UNIT_NUM_WIDTH-' ].Update(background_color=self.enabled_color.get_hex())
           self.window[f'-UNIT_HEIGHT-'    ].Update("")
           self.window[f'-UNIT_WIDTH-'     ].Update("")
+          if new_load is True:
+            self.window['-UNIT_NUM_WIDTH-' ].Update(self.tileParams.no_per_width)
+            self.window['-UNIT_NUM_HEIGHT-'].Update(self.tileParams.no_per_height)
 
     def update_canvas(self, image):
         graph = self.window["-CANVAS-"]
@@ -440,6 +455,41 @@ class App:
 
     def play(self):
         self.event_loop()
+
+    def save_ptg(self, file_path):
+      with open(file_path, 'wb') as outp:
+        pickle.dump(self.tileParams, outp, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(self.grid.image, outp, pickle.HIGHEST_PROTOCOL)
+      
+    def load_ptg(self, file_path):
+      with open(file_path, 'rb') as inp:
+        # DO NOT CHANGE ORDER
+        self.tileParams = pickle.load(inp)
+        grid_image = pickle.load(inp)
+        
+        graph = self.window["-CANVAS-"]
+        graph.erase()
+        self.grid = Grid(self.tileParams, self.canvas_base_pixel_x, self.canvas_base_pixel_y)
+        self.grid.load_from_array(grid_image)
+        self.update_canvas(self.grid.image)
+
+        self.update_window_from_tileparams(new_load=True)
+    
+    def update_window_from_tileparams(self, new_load=False):
+        if new_load is True:
+          self.window['-GROUTING_SIZE-'].Update(self.tileParams.GROUTING_SIZE)
+        self.update_unit_options_en_disable(self.tileParams.mode, new_load)
+        self.window['-TILE_WIDTH-' ].Update(self.tileParams.NEW_TILE_PX_WIDTH //self.tileParams.PIXELS_PER_MM)
+        self.window['-TILE_HEIGHT-'].Update(self.tileParams.NEW_TILE_PX_HEIGHT//self.tileParams.PIXELS_PER_MM)
+
+        if self.tileParams.NEW_TILE_PX_WIDTH != self.tileParams.NEW_TILE_PX_HEIGHT:
+          self.window['-TILED_Rotated-'].Update(disabled=True)
+          self.tiled_view_mode = '-TILED_Mirrored-'
+          self.window['-TILED_Mirrored-'].Update(True)
+          self.view_rotated_view_options = False
+          self.window['-TILED_Rotated_options-'].update(visible=self.view_rotated_view_options)
+        else:
+          self.window['-TILED_Rotated-'].Update(disabled=False)
 
     def pick_color(self, hex_code, stored_value, name=None):
       color_picked = Color()

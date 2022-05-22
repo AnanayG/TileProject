@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import tkinter as tk
+import PySimpleGUI as sg
 
 def colorSelectorTkWindow():
     root = tk.Toplevel()
@@ -20,6 +21,9 @@ def colorSelectorTkWindow():
     root.destroy()
 
     return color
+
+def about_me():
+    sg.PopupQuick('"All great things have small beginnings" - Peter Senge', auto_close=False)
 
 def crop_image(image, width=None, height=None):
     if width is None and height is None:

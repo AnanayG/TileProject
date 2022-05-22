@@ -37,15 +37,6 @@ class RectanglularGrid():
 
 
     def get_unit_color(self, image, width_num, height_num):
-        # base_width  = width_num *self.tileParams.pixel_width_plus_grout
-        # base_height = height_num*self.tileParams.pixel_height_plus_grout
-        # center = Point(base_width + (self.tileParams.pixel_width_plus_grout/2), 
-        #                base_height + (self.tileParams.pixel_height_plus_grout/2))
-        # coordi = center.get_point()
-
-        # # note: height and width are reversed
-        # return image[coordi[1]][coordi[0]]
-
         pixel = self.pixels_grid[width_num][height_num]
         return (pixel.pixel_color ,pixel.grouting_color)
 
@@ -77,6 +68,21 @@ class RectanglularGrid():
         self.get_reflected_pixel_list(set_, width_num, height_num)
         for element in set_:
             self.color_pixel_with_grouting(image, element[0], element[1], pixel_color, grouting_color)
+
+    def load_from_array(self, image):
+        #updates pixels_grid, indirectly
+        grouting_color = self.tileParams.GROUTING_COLOR
+        for j in range(self.no_per_width):
+            for i in range(self.no_per_height):
+                base_width  = j * self.tileParams.pixel_width_plus_grout
+                base_height = i * self.tileParams.pixel_height_plus_grout
+                center = Point(base_width + (self.tileParams.pixel_width_plus_grout/2), 
+                            base_height + (self.tileParams.pixel_height_plus_grout/2))
+                coordi = center.get_point()
+
+                _rgb = image[coordi[1]][coordi[0]]
+                pixel_color = Color(r=_rgb[0], g=_rgb[1], b=_rgb[2])
+                self.color_pixel_with_grouting(image, j, i, pixel_color, grouting_color)
 
     def get_reflected_pixel_list(self, set_, width_num, height_num):
         """
@@ -155,6 +161,12 @@ class Grid:
 
         self.image = image
 
+    def load_from_array(self, image):
+        self.rect = RectanglularGrid(tileParams  = self.tileParams,
+                                     pixel_shape = RectangularPixel)
+        self.image = image
+        newImage = self.rect.load_from_array(image)
+    
     def update_tiled_image(self, image, mode="-TILED_Repeated-"):
         self.tiled_image = image_tiled(image, mode=mode)
 
@@ -201,7 +213,7 @@ class Grid:
         newImage = self.rect.swapColors(self.image, old_color, new_color)
         self.image = newImage
 
-    def save(self, filename='image.png'):
+    def save_image(self, filename='image.png'):
         image_rgb = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
         cv2.imwrite(filename, image_rgb)
 
