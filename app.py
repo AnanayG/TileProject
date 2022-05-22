@@ -23,6 +23,10 @@ class App:
                                  'g':'-Color_Swapper-', 'G':'-Color_Swapper-',
                                  'h':'-Color_Picker-', 'H':'-Color_Picker-',
                                  ' ':'-UPDATE_TITLED_VIEW-'}
+        self.tool_to_canvas_cursor = {'-Brush-'         :'plus',
+                                      '-Eraser-'        :'dot',
+                                      '-Color_Swapper-' :'crosshair',
+                                      '-Color_Picker-'  :'crosshair'}
         
         self.blend_mode_color_count = 5
         self.blend_mode_on = True
@@ -179,6 +183,7 @@ class App:
           [sg.Column(left_pane), work_canvas, sg.Column(right_pane)]
         ]
         self.window = sg.Window('Application', layout, finalize=True, resizable=True, return_keyboard_events=True)
+        self.window['-CANVAS-'].Widget.config(cursor=self.tool_to_canvas_cursor['-Brush-'])
 
         self.gen_new_image()
 
@@ -292,6 +297,7 @@ class App:
 
             elif event in ['-Eraser-', '-Brush-', '-Color_Swapper-', '-Color_Picker-']:
               self.window.Element('-CANVAS-').SetFocus()
+              self.window['-CANVAS-'].Widget.config(cursor=self.tool_to_canvas_cursor[event])
               print('Radio Button called with ', event)
               self.tool_picked = event
               self.window['pixel_color_swap_menu'].Update(visible=(event=='-Color_Swapper-'))
