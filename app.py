@@ -259,6 +259,7 @@ class App:
               print('Tiled view changed to ', event)
               self.tiled_view_mode = event
             elif event == '-CANVAS-':
+              self.window.Element(event).SetFocus()
               # print(values[event])
               
               pixel_color, gr_color = self.grid.get_pixel_color(pixel_x=values[event][0], pixel_y=values[event][1])
