@@ -120,13 +120,14 @@ class App:
              title='Symmetry', relief=sg.RELIEF_SUNKEN, tooltip='Check one or multiple')],
           [sg.HorizontalSeparator()],
 
-          [sg.Radio('Brush',        'tool_name', key='-Brush-',        enable_events=True, default=True),
-           sg.Radio('Eraser',       'tool_name', key='-Eraser-',       enable_events=True),
+          [sg.Radio('Brush',        'tool_name', key='-Brush-',        enable_events=True, tooltip='Press b ', default=True),
+           sg.Radio('Eraser',       'tool_name', key='-Eraser-',       enable_events=True, tooltip='Press e '),
           #  sg.Radio('Paint Bucket', 'tool_name', key='-Paint_Bucket-', enable_events=True),
-           sg.Radio('Color Picker', 'tool_name', key='-Color_Picker-', enable_events=True)],
+           sg.Radio('Color Picker', 'tool_name', key='-Color_Picker-', enable_events=True, tooltip='Press c ')],
           [sg.HorizontalSeparator()],
           
-          [sg.Ok(button_text='Generate', key='-Generate-'), sg.Cancel()]]
+          [sg.Ok(button_text='Generate', key='-Generate-'), sg.Cancel()]
+        ]
         
         work_canvas = sg.Graph(
           canvas_size=(self.canvas_dimensions[0], self.canvas_dimensions[1]),
@@ -151,7 +152,7 @@ class App:
            sg.Radio('Anticlockwise', 'rotated_mode_options', key='-TILED_Rotated_ANTI_CLK-' , enable_events=True)]
         ]
         right_pane = [
-          [sg.Button(button_text='Update titled view', key='-UPDATE_TITLED_VIEW-')],
+          [sg.Button(button_text='Update titled view', key='-UPDATE_TITLED_VIEW-', tooltip='Press SPACE')],
           [sg.Radio('Rotated',  'tile_mode', key='-TILED_Rotated-' , enable_events=True, default=True),
            sg.Radio('Mirrored', 'tile_mode', key='-TILED_Mirrored-' , enable_events=True),
            sg.Radio('Repeated', 'tile_mode', key='-TILED_Repeated-', enable_events=True)],
