@@ -1,3 +1,4 @@
+from turtle import update
 import numpy
 import PySimpleGUI as sg
 from base_classes import array_to_data, Color, convert_to_int
@@ -145,6 +146,7 @@ class App:
         right_pane = [
           [sg.Button(button_text='Update titled view', key='-UPDATE_TITLED_VIEW-')],
           [sg.Radio('Rotated',  'tile_mode', key='-TILED_Rotated-' , enable_events=True, default=True),
+           sg.Radio('Mirrored', 'tile_mode', key='-TILED_Mirrored-' , enable_events=True),
            sg.Radio('Repeated', 'tile_mode', key='-TILED_Repeated-', enable_events=True)],
           [sg.HorizontalSeparator()],
           [tiled_canvas]
@@ -342,6 +344,10 @@ class App:
         self.update_unit_options_en_disable(self.tileParams.mode)
         self.window['-TILE_WIDTH-' ].Update(self.tileParams.NEW_TILE_PX_WIDTH //self.tileParams.PIXELS_PER_MM)
         self.window['-TILE_HEIGHT-'].Update(self.tileParams.NEW_TILE_PX_HEIGHT//self.tileParams.PIXELS_PER_MM)
+        if self.tileParams.NEW_TILE_PX_WIDTH != self.tileParams.NEW_TILE_PX_HEIGHT:
+          self.window['-TILED_Rotated-'].Update(disabled=True)
+        else:
+          self.window['-TILED_Rotated-'].Update(disabled=False)
 
     def update_unit_options_en_disable(self, mode):
         if mode == "pixel_size":
