@@ -366,8 +366,11 @@ class App:
         self.window['-TILE_HEIGHT-'].Update(self.tileParams.NEW_TILE_PX_HEIGHT//self.tileParams.PIXELS_PER_MM)
         if self.tileParams.NEW_TILE_PX_WIDTH != self.tileParams.NEW_TILE_PX_HEIGHT:
           self.window['-TILED_Rotated-'].Update(disabled=True)
-        else:
+          self.tiled_view_mode = '-TILED_Mirrored-'
+          self.window['-TILED_Mirrored-'].Update(True)
           self.view_rotated_view_options = False
+          self.window['-TILED_Rotated_options-'].update(visible=self.view_rotated_view_options)
+        else:
           self.window['-TILED_Rotated-'].Update(disabled=False)
 
     def update_unit_options_en_disable(self, mode):
