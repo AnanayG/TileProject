@@ -20,8 +20,8 @@ class App:
 
         self.keyboard_mapping_to_event = {'r':'-Brush-' , 'R':'-Brush-',
                                  'e':'-Eraser-', 'E':'-Eraser-',
-                                 'h':'-Color_Swapper-', 'H':'-Color_Swapper-',
-                                 'g':'-Color_Picker-', 'G':'-Color_Picker-',
+                                 'g':'-Color_Swapper-', 'G':'-Color_Swapper-',
+                                 'h':'-Color_Picker-', 'H':'-Color_Picker-',
                                  ' ':'-UPDATE_TITLED_VIEW-'}
         
         self.blend_mode_color_count = 5
@@ -135,10 +135,10 @@ class App:
              title='Symmetry', relief=sg.RELIEF_SUNKEN, tooltip='Check one or multiple')],
           [sg.HorizontalSeparator()],
 
-          [sg.Radio('Brush',        'tool_name', key='-Brush-',         enable_events=True, tooltip='Press b ', default=True),
+          [sg.Radio('Brush',        'tool_name', key='-Brush-',         enable_events=True, tooltip='Press r ', default=True),
            sg.Radio('Eraser',       'tool_name', key='-Eraser-',        enable_events=True, tooltip='Press e '),
-           sg.Radio('Color Swap'  , 'tool_name', key='-Color_Swapper-', enable_events=True, tooltip='Press h '),
-           sg.Radio('Color Picker', 'tool_name', key='-Color_Picker-',  enable_events=True, tooltip='Press g ')],
+           sg.Radio('Color Swap'  , 'tool_name', key='-Color_Swapper-', enable_events=True, tooltip='Press g '),
+           sg.Radio('Color Picker', 'tool_name', key='-Color_Picker-',  enable_events=True, tooltip='Press h ')],
           [sg.HorizontalSeparator()],
           
           [sg.Ok(button_text='Generate', key='-Generate-'), sg.Cancel()]
