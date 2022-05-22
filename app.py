@@ -20,7 +20,8 @@ class App:
 
         self.keyboard_mapping_to_event = {'r':'-Brush-' , 'R':'-Brush-',
                                  'e':'-Eraser-', 'E':'-Eraser-',
-                                 'c':'-Color_Picker-', 'C':'-Color_Picker-',
+                                 'h':'-Color_Swapper-', 'H':'-Color_Swapper-',
+                                 'g':'-Color_Picker-', 'G':'-Color_Picker-',
                                  ' ':'-UPDATE_TITLED_VIEW-'}
         
         self.blend_mode_color_count = 5
@@ -40,8 +41,9 @@ class App:
 
     def init_values(self):
         self.tileParams = TileParams()
-        self.pixel_color_picked    = Color(hexcode='#1f77b4', name='default_pixel')
-        self.grouting_color_picked = self.tileParams.GROUTING_COLOR
+        self.pixel_color_picked     = Color(hexcode='#1f77b4', name='default_pixel')
+        self.pixel_color_picked_new = Color(hexcode='#1f77b4', name='default_pixel_new')
+        self.grouting_color_picked   = self.tileParams.GROUTING_COLOR
         
         self.tool_picked = '-Brush-'
         self.tiled_view_mode = '-TILED_Rotated_CLK-'
@@ -74,6 +76,15 @@ class App:
             for i in range(self.blend_mode_color_count)
           ]
 
+        
+        pixel_color_swap_menu = [
+            [sg.Text(f'New Color', font='ANY 15', size=(12,1)),
+            sg.In("", size=(7, 1), enable_events=True, key=f'-SET_PIXEL_COLOR_NEW-', do_not_clear=True),
+            sg.ColorChooserButton("", size=(5, 1), target=f'-SET_PIXEL_COLOR_NEW-', button_color=('#1f77b4', '#1f77b4'),
+                                  border_width=1, key=f'-set_new_pixel_color_chooser-'),
+            sg.Button(button_text='Change', key='-PIXEL_COLOR_SWAP_BUTTON-')]
+          ]
+        
         unit_size = [[sg.Text('Pixel Size', font='ANY 15')],
           [sg.Text('Height: ', size=(10,1)), sg.In(k='-UNIT_HEIGHT-', size=(8,1), enable_events=True)],
           [sg.Text('Width: ' , size=(10,1)), sg.In(k='-UNIT_WIDTH-' , size=(8,1), enable_events=True)]]
@@ -106,6 +117,9 @@ class App:
            sg.In("", size=(7, 1), visible=True, enable_events=True, key='-SET_PIXEL_COLOR-', do_not_clear=True),
            sg.ColorChooserButton("", size=(5, 1), target='-SET_PIXEL_COLOR-', button_color=('#1f77b4', '#1f77b4'),
                                  border_width=1, key='-set_pixel_color_chooser-')],
+          [self.collapse(pixel_color_swap_menu, 'pixel_color_swap_menu', self.tool_picked=='-Color_Swapper-')],
+          [sg.HorizontalSeparator()],
+          
           [sg.Text('Grouting Color', font='ANY 15', size=(12,1)),
            sg.In("", size=(7, 1), visible=True, enable_events=True, key='-SET_GROUTING_COLOR-'),
            sg.ColorChooserButton("", size=(5, 1), target='-SET_GROUTING_COLOR-', button_color=('#1f77b4', '#1f77b4'),
@@ -121,10 +135,10 @@ class App:
              title='Symmetry', relief=sg.RELIEF_SUNKEN, tooltip='Check one or multiple')],
           [sg.HorizontalSeparator()],
 
-          [sg.Radio('Brush',        'tool_name', key='-Brush-',        enable_events=True, tooltip='Press b ', default=True),
-           sg.Radio('Eraser',       'tool_name', key='-Eraser-',       enable_events=True, tooltip='Press e '),
-          #  sg.Radio('Paint Bucket', 'tool_name', key='-Paint_Bucket-', enable_events=True),
-           sg.Radio('Color Picker', 'tool_name', key='-Color_Picker-', enable_events=True, tooltip='Press c ')],
+          [sg.Radio('Brush',        'tool_name', key='-Brush-',         enable_events=True, tooltip='Press b ', default=True),
+           sg.Radio('Eraser',       'tool_name', key='-Eraser-',        enable_events=True, tooltip='Press e '),
+           sg.Radio('Color Swap'  , 'tool_name', key='-Color_Swapper-', enable_events=True, tooltip='Press h '),
+           sg.Radio('Color Picker', 'tool_name', key='-Color_Picker-',  enable_events=True, tooltip='Press g ')],
           [sg.HorizontalSeparator()],
           
           [sg.Ok(button_text='Generate', key='-Generate-'), sg.Cancel()]
@@ -230,6 +244,13 @@ class App:
                 mode = "pixel_number" if "NUM" in event else "pixel_size"
                 self.update_unit_options_en_disable(mode)
 
+            elif event == '-SET_PIXEL_COLOR_NEW-':
+                ret = self.pick_color(hex_code=values[event],
+                                      stored_value=self.pixel_color_picked_new, 
+                                      name='bg_color_picked')
+                if ret is not False:
+                  self.pixel_color_picked_new = ret
+                  self.window[f'-set_new_pixel_color_chooser-'].Update(button_color=(values[event], values[event]))
             elif event == '-SET_BG_COLOR-':
                 ret = self.pick_color(hex_code=values[event],
                                       stored_value=self.bg_color_picked, 
@@ -259,15 +280,21 @@ class App:
                   # print(f"Updating blend_color{color_num} to {ret}")
                   self.window[f'-blend_color_chooser{color_num}-'].Update(button_color=(values[event], values[event]))
 
+            elif event == '-PIXEL_COLOR_SWAP_BUTTON-':
+              print("SWAPPING colors!")
+              self.grid.swapColors(self.pixel_color_picked, self.pixel_color_picked_new)
+              self.update_canvas(self.grid.image)
+              
             elif event.endswith('_SYMM-'):
               print(f"{event} called")
               self.update_tileparams(values)
               self.grid.update_symm(self.tileParams)
 
-            elif event in ['-Eraser-', '-Brush-', '-Paint_Bucket-', '-Color_Picker-']:
+            elif event in ['-Eraser-', '-Brush-', '-Color_Swapper-', '-Color_Picker-']:
               self.window.Element('-CANVAS-').SetFocus()
               print('Radio Button called with ', event)
               self.tool_picked = event
+              self.window['pixel_color_swap_menu'].Update(visible=(event=='-Color_Swapper-'))
             elif event.startswith('-TILED_'):
               print('Tiled view changed to ', event)
               if 'Rotated' in event:
@@ -286,23 +313,21 @@ class App:
               # print(values[event])
               
               pixel_color, gr_color = self.grid.get_pixel_color(pixel_x=values[event][0], pixel_y=values[event][1])
+              if pixel_color is None or gr_color is None:
+                # print("OUT OF BOUNDS")
+                continue
 
               if self.tool_picked == '-Eraser-':
                 pixel_color_picked = self.bg_color_picked
               elif self.tool_picked == '-Brush-':
                 pixel_color_picked = self.pixel_color_picked
-              elif self.tool_picked == '-Color_Picker-':
+              elif self.tool_picked in ['-Color_Picker-','-Color_Swapper-']:
                 self.window['-SET_PIXEL_COLOR-'].Update(pixel_color.get_hex())
                 self.window['-set_pixel_color_chooser-'].Update(button_color=
                                 (pixel_color.get_hex(), pixel_color.get_hex()))
                 self.pixel_color_picked = pixel_color
                 continue
-              elif self.tool_picked == '-Paint_Bucket-':
-                continue
               
-              if pixel_color is None or gr_color is None:
-                # print("OUT OF BOUNDS")
-                continue
               if pixel_color.compare(pixel_color_picked) is True and \
                   gr_color.compare(self.grouting_color_picked) is True: 
                 # print("pixel_color, gr_color is same. no need to do anything")

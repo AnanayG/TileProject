@@ -118,6 +118,18 @@ class RectanglularGrid():
                                     pixel_color=pixel_color, grouting_color=grouting_color)
         return image
 
+    def swapColors(self, image, old_color, new_color):
+        for j in range(self.no_per_width):
+            for i in range(self.no_per_height):
+                pixel_color, grouting_color = self.get_unit_color(image, j,i)
+
+                if pixel_color.compare(old_color) is True:
+                    # PERFORMANCE: this calculated the reflected units for each unit
+                    #  which can perhaps be avoided if you are doing for all rectangles
+                    self.color_pixel_and_symmetrize(image, width_num=j, height_num=i, 
+                                        pixel_color=new_color, grouting_color=grouting_color)
+        return image
+
 class Grid:
     def __init__(self, tileParams, base_pixel_x, base_pixel_y) -> None:
         self.tileParams = tileParams
@@ -184,6 +196,10 @@ class Grid:
             return None, None
         
         return self.rect.get_unit_color(self.image, x,y)
+
+    def swapColors(self, old_color, new_color):
+        newImage = self.rect.swapColors(self.image, old_color, new_color)
+        self.image = newImage
 
     def save(self, filename='image.png'):
         image_rgb = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
