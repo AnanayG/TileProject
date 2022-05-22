@@ -263,6 +263,7 @@ class App:
               self.grid.update_symm(self.tileParams)
 
             elif event in ['-Eraser-', '-Brush-', '-Paint_Bucket-', '-Color_Picker-']:
+              self.window.Element('-CANVAS-').SetFocus()
               print('Radio Button called with ', event)
               self.tool_picked = event
             elif event.startswith('-TILED_'):
@@ -279,7 +280,7 @@ class App:
               self.window['-TILED_Rotated_options-'].update(visible=self.view_rotated_view_options)
             
             elif event == '-CANVAS-':
-              self.window.Element(event).SetFocus()
+              self.window.Element('-CANVAS-').SetFocus()
               # print(values[event])
               
               pixel_color, gr_color = self.grid.get_pixel_color(pixel_x=values[event][0], pixel_y=values[event][1])
@@ -324,6 +325,7 @@ class App:
             elif event == '-UPDATE_TITLED_VIEW-':
               self.update_titled_view(self.grid.image)
             elif event == '-Generate-':
+              self.window.Element('-CANVAS-').SetFocus()
               print("Generate pressed! tile_height: ", values['-TILE_HEIGHT-'],  "tile_width: ", values['-TILE_WIDTH-'])
               self.update_tileparams(values)
               self.gen_new_image()
@@ -365,6 +367,7 @@ class App:
         if self.tileParams.NEW_TILE_PX_WIDTH != self.tileParams.NEW_TILE_PX_HEIGHT:
           self.window['-TILED_Rotated-'].Update(disabled=True)
         else:
+          self.view_rotated_view_options = False
           self.window['-TILED_Rotated-'].Update(disabled=False)
 
     def update_unit_options_en_disable(self, mode):
