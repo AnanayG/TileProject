@@ -21,15 +21,18 @@ class App:
                                  'e':'-Eraser-', 'E':'-Eraser-',
                                  'c':'-Color_Picker-', 'C':'-Color_Picker-',
                                  ' ':'-UPDATE_TITLED_VIEW-'}
+        
         self.blend_mode_color_count = 5
         self.blend_mode_on = True
         self.blend_mode_selections = {str(i):{f'-BLEND_COLOR{i}-'        :None, 
                                               f'-BLEND_COLOR{i}_PERCENT-':0} 
                     for i in range(self.blend_mode_color_count)}
-        self.bg_color_picked = Color(hexcode='#808080', name='bg_default')
 
-        self.disabled_color = Color(hexcode='#808080', name='bg_default')
-        self.enabled_color  = Color(hexcode='#ffffff', name='bg_default')
+        self.bg_color_picked = Color(hexcode='#808080', name='bg_default')
+        self.disabled_color  = Color(hexcode='#808080', name='disabled')
+        self.enabled_color   = Color(hexcode='#ffffff', name='enabled')
+        
+        self.view_rotated_view_options = True
 
         self.init_values()
         self.init_graphics()
@@ -40,7 +43,7 @@ class App:
         self.grouting_color_picked = self.tileParams.GROUTING_COLOR
         
         self.tool_picked = '-Brush-'
-        self.tiled_view_mode = '-TILED_Rotated-'
+        self.tiled_view_mode = '-TILED_Rotated_CLK-'
     
     def init_graphics(self):
         self.graph = sg.Graph((500, 500), (0, 0), (450, 450),
@@ -143,11 +146,16 @@ class App:
           background_color='lightblue',
           drag_submits=False)
         
+        rotated_view_options = [
+          [sg.Radio('Clockwise', 'rotated_mode_options', key='-TILED_Rotated_CLK-' , enable_events=True, default=True),
+           sg.Radio('Anticlockwise', 'rotated_mode_options', key='-TILED_Rotated_ANTI_CLK-' , enable_events=True)]
+        ]
         right_pane = [
           [sg.Button(button_text='Update titled view', key='-UPDATE_TITLED_VIEW-')],
           [sg.Radio('Rotated',  'tile_mode', key='-TILED_Rotated-' , enable_events=True, default=True),
            sg.Radio('Mirrored', 'tile_mode', key='-TILED_Mirrored-' , enable_events=True),
            sg.Radio('Repeated', 'tile_mode', key='-TILED_Repeated-', enable_events=True)],
+          [self.collapse(rotated_view_options, '-TILED_Rotated_options-', self.view_rotated_view_options)],
           [sg.HorizontalSeparator()],
           [tiled_canvas]
         ]
@@ -259,7 +267,17 @@ class App:
               self.tool_picked = event
             elif event.startswith('-TILED_'):
               print('Tiled view changed to ', event)
-              self.tiled_view_mode = event
+              if 'Rotated' in event:
+                self.view_rotated_view_options = True
+                if values['-TILED_Rotated_CLK-'] is True:
+                  self.tiled_view_mode = '-TILED_Rotated_CLK-'
+                else:
+                  self.tiled_view_mode = '-TILED_Rotated_ANTI_CLK-'
+              else:
+                self.view_rotated_view_options = False
+                self.tiled_view_mode = event
+              self.window['-TILED_Rotated_options-'].update(visible=self.view_rotated_view_options)
+            
             elif event == '-CANVAS-':
               self.window.Element(event).SetFocus()
               # print(values[event])
