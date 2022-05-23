@@ -24,6 +24,7 @@ class RectangularPixel():
         self.pixel_height_plus_grout = pixel_height_plus_grout
 
         if center_point is not None:
+            self.center_point = center_point
             self.init_corners(center_point=center_point)
             
     def init_corners(self, center_point):
@@ -43,5 +44,17 @@ class RectangularPixel():
                     self.l_top.offset_point(offset= tileParams.GROUTING_OFFSET).get_point(), 
                     self.r_bot.offset_point(offset=-tileParams.GROUTING_OFFSET).get_point(), 
                     self.pixel_color.get_color(), 
+                    thickness=cv2.FILLED
+                )
+        
+        unit_width  = self.pixel_width_plus_grout -tileParams.GROUTING_OFFSET
+        unit_height = self.pixel_height_plus_grout-tileParams.GROUTING_OFFSET
+        off = (unit_width*0.25, -unit_height*0.25)
+        reflection_center = self.center_point.offset_point(x_off= off[0], y_off= off[1])
+        ref_color = Color(r=0xff, g=0xff, b=0xff)
+        cv2.circle(image, 
+                    reflection_center.get_point(), 
+                    1, 
+                    ref_color.get_color(), 
                     thickness=cv2.FILLED
                 )
