@@ -60,7 +60,7 @@ class App:
                               drag_submits=False,
                               background_color='lightblue')
         # ------ Menu Definition ------ #
-        menu_def = [['&File', ['&Load PTG', '&Save Image', 'Save &Tiled Image', 'Save &PTG','E&xit']],
+        menu_def = [['&File', ['&Load PTG', 'Save &PTG', '&Save Image', 'Save &Tiled Image','E&xit']],
                     ['&Edit', ['Change &Canvas Color', 'Paste', ['Special', 'Normal', ], 'Undo'], ],
                     ['&Help', '&About...'], ]
 
