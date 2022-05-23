@@ -47,14 +47,15 @@ class RectangularPixel():
                     thickness=cv2.FILLED
                 )
         
-        unit_width  = self.pixel_width_plus_grout -tileParams.GROUTING_OFFSET
-        unit_height = self.pixel_height_plus_grout-tileParams.GROUTING_OFFSET
-        off = (unit_width*0.25, -unit_height*0.25)
-        reflection_center = self.center_point.offset_point(x_off= off[0], y_off= off[1])
-        ref_color = Color(r=0xff, g=0xff, b=0xff)
-        cv2.circle(image, 
-                    reflection_center.get_point(), 
-                    1, 
-                    ref_color.get_color(), 
-                    thickness=cv2.FILLED
-                )
+        if tileParams.add_gloss is True:
+            unit_width  = self.pixel_width_plus_grout -tileParams.GROUTING_OFFSET
+            unit_height = self.pixel_height_plus_grout-tileParams.GROUTING_OFFSET
+            off = (unit_width*0.25, -unit_height*0.25)
+            reflection_center = self.center_point.offset_point(x_off= off[0], y_off= off[1])
+            ref_color = Color(r=0xff, g=0xff, b=0xff)
+            cv2.circle(image, 
+                        reflection_center.get_point(), 
+                        1, 
+                        ref_color.get_color(), 
+                        thickness=cv2.FILLED
+                    )

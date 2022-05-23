@@ -39,6 +39,8 @@ class App:
         
         self.view_rotated_view_options = True
 
+        self.add_gloss = False
+
         self.init_values()
         self.init_graphics()
 
@@ -127,6 +129,9 @@ class App:
            sg.In("", size=(7, 1), visible=True, enable_events=True, key='-SET_GROUTING_COLOR-'),
            sg.ColorChooserButton("", size=(5, 1), target='-SET_GROUTING_COLOR-', button_color=('#1f77b4', '#1f77b4'),
                                  border_width=1, key='-set_grouting_color_chooser-')],
+          [sg.HorizontalSeparator()],
+
+          [sg.Checkbox('Add gloss', enable_events=True, key='-GLOSS-', default=self.add_gloss)],
           [sg.HorizontalSeparator()],
 
           [sg.Frame(layout=[
@@ -224,6 +229,10 @@ class App:
                 self.blend_mode_on = not self.blend_mode_on
                 self.window['blend_mode_menu'  ].update(visible =     self.blend_mode_on)
                 self.window['single_color_menu'].update(visible = not self.blend_mode_on)
+            elif event == '-GLOSS-':
+                self.add_gloss = not self.add_gloss
+                self.grid.add_gloss_effect(self.add_gloss)
+                self.update_canvas(self.grid.image)
 
             elif event == '-SET_PIXEL_COLOR-':
                 ret = self.pick_color(hex_code=values[event],
