@@ -452,6 +452,7 @@ class App:
           
         if new_load:
           self.window['-GLOSS-'].Update(self.tileParams.add_gloss)
+          self.add_gloss = self.tileParams.add_gloss
           
           self.window['-VERITICAL_SYMM-'].Update(self.tileParams.symmetry['vertical'])
           self.window['-HORIZONTAL_SYMM-'].Update(self.tileParams.symmetry['horizontal'])
