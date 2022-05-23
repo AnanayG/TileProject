@@ -458,6 +458,9 @@ class App:
           self.window['-HORIZONTAL_SYMM-'].Update(self.tileParams.symmetry['horizontal'])
           self.window['-RIGHT_D_SYMM-'].Update(self.tileParams.symmetry['right_diagonal'])
           self.window['-LEFT_D_SYMM-'].Update(self.tileParams.symmetry['left_diagonal'])
+
+          gr = self.tileParams.GROUTING_COLOR
+          self.window['-set_grouting_color_chooser-'].Update(button_color=(gr.get_hex(), gr.get_hex()))
             
 
     def update_canvas(self, image):
