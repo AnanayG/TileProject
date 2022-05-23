@@ -136,6 +136,18 @@ class RectanglularGrid():
                                         pixel_color=new_color, grouting_color=grouting_color)
         return image
 
+    def add_gloss_effect(self, image, add_gloss=True):
+        self.tileParams.add_gloss = add_gloss
+        for j in range(self.no_per_width):
+            for i in range(self.no_per_height):
+                pixel_color, grouting_color = self.get_unit_color(image, j,i)
+
+                # PERFORMANCE: this calculated the reflected units for each unit
+                #  which can perhaps be avoided if you are doing for all rectangles
+                self.color_pixel_and_symmetrize(image, width_num=j, height_num=i, 
+                                    pixel_color=pixel_color, grouting_color=grouting_color)
+        return image
+
 class Grid:
     def __init__(self, tileParams, base_pixel_x, base_pixel_y) -> None:
         self.tileParams = tileParams
@@ -201,6 +213,11 @@ class Grid:
         newImage = self.rect.recolorGrouting(self.image, new_color)
         self.image = newImage
         self.tileParams.GROUTING_COLOR = new_color
+
+    def add_gloss_effect(self, add_gloss=True):
+        newImage = self.rect.add_gloss_effect(self.image, add_gloss)
+        self.image = newImage
+        self.tileParams.add_gloss = add_gloss
 
     def get_pixel_color(self, pixel_x, pixel_y):
         x,y = self.convert_pixel_coordinates_to_unit_coordinates(pixel_x, pixel_y)

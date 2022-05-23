@@ -13,7 +13,8 @@ class TileParams:
         self.rectangle_width  = 5
         self.rectangle_height = 5
         self.mode = "pixel_size"
-
+        
+        self.add_gloss = False
         # GROUTING_SIZE = 4
         # rectangle_width  = 4
         # rectangle_height = 9
