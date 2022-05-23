@@ -449,6 +449,15 @@ class App:
           if new_load is True:
             self.window['-UNIT_NUM_WIDTH-' ].Update(self.tileParams.no_per_width)
             self.window['-UNIT_NUM_HEIGHT-'].Update(self.tileParams.no_per_height)
+          
+        if new_load:
+          self.window['-GLOSS-'].Update(self.tileParams.add_gloss)
+          
+          self.window['-VERITICAL_SYMM-'].Update(self.tileParams.symmetry['vertical'])
+          self.window['-HORIZONTAL_SYMM-'].Update(self.tileParams.symmetry['horizontal'])
+          self.window['-RIGHT_D_SYMM-'].Update(self.tileParams.symmetry['right_diagonal'])
+          self.window['-LEFT_D_SYMM-'].Update(self.tileParams.symmetry['left_diagonal'])
+            
 
     def update_canvas(self, image):
         graph = self.window["-CANVAS-"]
