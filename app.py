@@ -131,7 +131,7 @@ class App:
                                  border_width=1, key='-set_grouting_color_chooser-')],
           [sg.HorizontalSeparator()],
 
-          [sg.Checkbox('Add gloss', enable_events=True, key='-GLOSS-', default=self.add_gloss)],
+          [sg.Checkbox('Gloss', enable_events=True, key='-GLOSS-', default=self.add_gloss)],
           [sg.HorizontalSeparator()],
 
           [sg.Frame(layout=[
