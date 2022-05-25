@@ -1,9 +1,10 @@
 import PySimpleGUI as sg
-from base_classes import array_to_data, Color, convert_to_int
+from base_classes import Color, convert_to_int
 from generator import Grid
 from display_image import colorSelectorTkWindow, about_me
 from input_params import TileParams
 import pickle
+from PIL import Image, ImageTk
 
 # sg.theme('Dark Teal')
 
@@ -11,11 +12,14 @@ class App:
     def __init__(self):
         self.canvas_dimensions = [800, 1000]
         self.canvas_base_pixel_x = 20
-        self.canvas_base_pixel_y = 45 
+        self.canvas_base_pixel_y = 45
 
         self.tiled_view_dimensions = [400,400]
         self.tiled_base_pixel_x = 0
         self.tiled_base_pixel_y = 0
+
+        self.imscale = 1.0  # scale for the canvas image
+        self.delta   = 1.3  # zoom step magnitude
 
         self.keyboard_mapping_to_event = {'r':'-Brush-' , 'R':'-Brush-',
                                  'e':'-Eraser-', 'E':'-Eraser-',
@@ -186,24 +190,119 @@ class App:
         layout = [
           [sg.Column(left_pane), work_canvas, sg.Column(right_pane)]
         ]
+        
         self.window = sg.Window('Application', layout, finalize=True, resizable=True, return_keyboard_events=True)
-        self.window['-CANVAS-'].Widget.config(cursor=self.tool_to_canvas_cursor['-Brush-'])
+        #these are used for canvas, shouldn't change anything for the whole application
+        self.window.TKroot.unbind('<Control-ButtonPress-1>')
+        self.window.TKroot.unbind('<Control-B1-Motion>')
+        
+        self.canvas       = self.window['-CANVAS-'].Widget
+        self.tiled_canvas = self.window['-TILED_CANVAS-'].Widget
+
+        self.canvas.config(cursor=self.tool_to_canvas_cursor['-Brush-'])
+        self.canvas.bind('<Configure>', self.show_image)  # canvas is resized
+        self.canvas.bind('<Control-ButtonPress-1>', self.move_from)
+        self.canvas.bind('<Control-B1-Motion>',     self.move_to)
+        self.canvas.bind('<MouseWheel>', self.wheel)  # with Windows and MacOS, but not Linux
+        self.canvas.bind('<Button-5>',   self.wheel)  # only with Linux, wheel scroll down
+        self.canvas.bind('<Button-4>',   self.wheel)  # only with Linux, wheel scroll up
 
         self.gen_new_image()
+
+    def wheel(self, event):
+        ''' Zoom with mouse wheel '''
+        x = self.canvas.canvasx(event.x)
+        y = self.canvas.canvasy(event.y)
+        
+        '''
+        Uncomment the following 3 lines, then zoom will only work
+        inside the TILE area
+        '''
+        # bbox = self.canvas.bbox(self.container)  # get image area
+        # if bbox[0] < x < bbox[2] and bbox[1] < y < bbox[3]: pass  # Ok! Inside the image
+        # else: return  # zoom only inside image area
+
+        scale = 1.0
+        # Respond to Linux (event.num) or Windows (event.delta) wheel event
+        if event.num == 5 or event.delta == -120:  # scroll down
+            i = min(self.width, self.height)
+            if int(i * self.imscale) < 30: return  # image is less than 30 pixels
+            self.imscale /= self.delta
+            scale        /= self.delta
+        if event.num == 4 or event.delta == 120:  # scroll up
+            i = min(self.canvas.winfo_width(), self.canvas.winfo_height())
+            if i < self.imscale: return  # 1 pixel is bigger than the visible area
+            self.imscale *= self.delta
+            scale        *= self.delta
+        self.canvas.scale('all', x, y, scale, scale)  # rescale all canvas objects
+        print(f"CHANGING SCALE {x=} {y=} {scale=} {self.imscale=}")
+        self.show_image()
+
+    def move_from(self, event):
+        ''' Remember previous coordinates for scrolling with the mouse '''
+        self.canvas.scan_mark(event.x, event.y)
+        self.move_from_pos = (event.x, event.y)
+        # print(f" move_from: {event.x=}, {event.y=}")
+
+    def move_to(self, event):
+        ''' Drag (move) canvas to the new position '''
+        self.canvas.scan_dragto(event.x, event.y, gain=1)
+        self.show_image()  # redraw the image
+    
+    def show_image(self, event=None):
+        ''' Show image on the Canvas '''
+        bbox1 = self.canvas.bbox(self.container)  # get image area
+        # Remove 1 pixel shift at the sides of the bbox1
+        bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
+        self.canvas_bb = bbox1
+
+        bbox2 = (self.canvas.canvasx(0),  # get visible area of the canvas
+                 self.canvas.canvasy(0),
+                 self.canvas.canvasx(self.canvas.winfo_width()),
+                 self.canvas.canvasy(self.canvas.winfo_height()))
+        
+        bbox = [min(bbox1[0], bbox2[0]), min(bbox1[1], bbox2[1]),  # get scroll region box
+                max(bbox1[2], bbox2[2]), max(bbox1[3], bbox2[3])]
+        if bbox[0] == bbox2[0] and bbox[2] == bbox2[2]:  # whole image in the visible area
+            bbox[0] = bbox1[0]
+            bbox[2] = bbox1[2]
+        if bbox[1] == bbox2[1] and bbox[3] == bbox2[3]:  # whole image in the visible area
+            bbox[1] = bbox1[1]
+            bbox[3] = bbox1[3]
+        self.canvas.configure(scrollregion=bbox)  # set scroll region
+        x1 = max(bbox2[0] - bbox1[0], 0)  # get coordinates (x1,y1,x2,y2) of the image tile
+        y1 = max(bbox2[1] - bbox1[1], 0)
+        x2 = min(bbox2[2], bbox1[2]) - bbox1[0]
+        y2 = min(bbox2[3], bbox1[3]) - bbox1[1]
+        if int(x2 - x1) > 0 and int(y2 - y1) > 0:  # show image if it in the visible area
+            x = min(int(x2 / self.imscale), self.width)   # sometimes it is larger on 1 pixel...
+            y = min(int(y2 / self.imscale), self.height)  # ...and sometimes not
+            image = self.image.crop((int(x1 / self.imscale), int(y1 / self.imscale), x, y))
+            imagetk = ImageTk.PhotoImage(image.resize((int(x2 - x1), int(y2 - y1))))
+            imageid = self.canvas.create_image(max(bbox2[0], bbox1[0]), max(bbox2[1], bbox1[1]),
+                                               anchor='nw', image=imagetk)
+            self.canvas.lower(imageid)  # set image into background
+            self.canvas.imagetk = imagetk  # keep an extra reference to prevent garbage-collection
+
 
     def gen_new_image(self):
         graph = self.window["-CANVAS-"]
         graph.erase()
 
-        self.grid = Grid(self.tileParams, self.canvas_base_pixel_x, self.canvas_base_pixel_y)
+        base_x, base_y = self.canvas_base_pixel_x, self.canvas_base_pixel_y
+        self.grid = Grid(self.tileParams)
         self.grid.generate_grid()
-        self.update_canvas(self.grid.image)
+
+        (self.width, self.height, depth) = self.grid.image.shape
+        self.container = self.canvas.create_rectangle(base_x, base_y,
+                    base_x+self.width, base_y+self.height, width=1, tags="image_bb")
+        
+        self.update_canvas_from_arr(self.grid.image)
 
     def event_loop(self):
         past_event = None
         while True:
             event, values = self.window.read(timeout=1)
-
             # TEMP FIX: this bit of logic prevents consecutive repeat event to be processed multiple times
             if (event in ['-SET_PIXEL_COLOR-', 'Save']):
               if past_event is not None:
@@ -232,7 +331,7 @@ class App:
             elif event == '-GLOSS-':
                 self.add_gloss = not self.add_gloss
                 self.grid.add_gloss_effect(self.add_gloss)
-                self.update_canvas(self.grid.image)
+                self.update_canvas_from_arr(self.grid.image)
 
             elif event == '-SET_PIXEL_COLOR-':
                 ret = self.pick_color(hex_code=values[event],
@@ -252,7 +351,7 @@ class App:
                   self.window['-set_grouting_color_chooser-'].Update(button_color=(values[event], values[event]))
 
                   self.grid.change_grouting_color(self.grouting_color_picked)
-                  self.update_canvas(self.grid.image)
+                  self.update_canvas_from_arr(self.grid.image)
 
             elif event.startswith('-UNIT_'):
                 self.window[event].Update(background_color=self.enabled_color.get_hex())
@@ -298,7 +397,7 @@ class App:
             elif event == '-PIXEL_COLOR_SWAP_BUTTON-':
               print("SWAPPING colors!")
               self.grid.swapColors(self.pixel_color_picked, self.pixel_color_picked_new)
-              self.update_canvas(self.grid.image)
+              self.update_canvas_from_arr(self.grid.image)
               
             elif event.endswith('_SYMM-'):
               print(f"{event} called")
@@ -328,7 +427,8 @@ class App:
               self.window.Element('-CANVAS-').SetFocus()
               # print(values[event])
               
-              pixel_color, gr_color = self.grid.get_pixel_color(pixel_x=values[event][0], pixel_y=values[event][1])
+              x,y = self.convert_pixel_coordinates_to_unit_coordinates(values[event], self.canvas_bb)
+              pixel_color, gr_color = self.grid.get_pixel_color(x,y)
               if pixel_color is None or gr_color is None:
                 # print("OUT OF BOUNDS")
                 continue
@@ -349,8 +449,9 @@ class App:
                 # print("pixel_color, gr_color is same. no need to do anything")
                 continue 
               else:
-                self.grid.color_pixel(self.grid.image, values[event][0], values[event][1], pixel_color_picked)
-                self.update_canvas(self.grid.image)
+                self.grid.color_pixel(self.grid.image, x,y, pixel_color_picked)
+                self.update_canvas_from_arr(self.grid.image)
+                self.update_titled_view(self.grid.image)
 
             elif event.startswith('Save'):
               if 'Image' in event:
@@ -462,18 +563,48 @@ class App:
           gr = self.tileParams.GROUTING_COLOR
           self.window['-set_grouting_color_chooser-'].Update(button_color=(gr.get_hex(), gr.get_hex()))
             
+    def convert_pixel_coordinates_to_unit_coordinates(self, selected_pixel, canvas_bb):
+        pixel_x = selected_pixel[0] - canvas_bb[0]
+        pixel_y = selected_pixel[1] - canvas_bb[1]
+        
+        canvas_width  = canvas_bb[2] - canvas_bb[0]
+        canvas_height = canvas_bb[3] - canvas_bb[1]
 
-    def update_canvas(self, image):
-        graph = self.window["-CANVAS-"]
-        data = array_to_data(image)
-        graph.draw_image(data=data, location=(self.canvas_base_pixel_x, self.canvas_base_pixel_y))
+        w_fac = canvas_width/self.tileParams.NEW_TILE_PX_WIDTH
+        h_fac = canvas_height/self.tileParams.NEW_TILE_PX_HEIGHT
+        
+        unit_width  = self.tileParams.pixel_width_plus_grout * w_fac
+        unit_height = self.tileParams.pixel_height_plus_grout * h_fac
+
+        # print(f"{canvas_bb=} {selected_pixel=} {w_fac=} {h_fac=}")
+        # print(f"{pixel_x=} {pixel_y=} {unit_width=} {unit_height=}")
+
+        if (pixel_x >= canvas_width or pixel_x < 0):
+            return (None, None)
+        if (pixel_y >= canvas_height or pixel_y < 0):
+            return (None, None)
+        
+        x = int(pixel_x/unit_width)
+        y = int(pixel_y/unit_height)
+        # print(f"{x=} {y=}")
+
+        return (x,y)
+        
+    def update_canvas_from_arr(self, image):
+        self.image = Image.fromarray(image)
+        self.show_image()
 
     def update_titled_view(self, image):
-        graph = self.window["-TILED_CANVAS-"]
         self.grid.update_tiled_image(image, mode=self.tiled_view_mode)
-        data = array_to_data(self.grid.tiled_image, 
-                      resize=self.tiled_view_dimensions)
-        graph.draw_image(data=data, location=(self.tiled_base_pixel_x, self.tiled_base_pixel_y))
+
+        tiled_image = Image.fromarray(self.grid.tiled_image)
+        tiled_image = tiled_image.resize(self.tiled_view_dimensions)
+        
+        imagetk = ImageTk.PhotoImage(tiled_image)
+        imageid = self.tiled_canvas.create_image(0, 0,
+                                            anchor='nw', image=imagetk)
+        self.tiled_canvas.lower(imageid)    # set image into background
+        self.tiled_canvas.imagetk = imagetk  # keep an extra reference to prevent garbage-collection
 
     def play(self):
         self.event_loop()
@@ -491,9 +622,9 @@ class App:
         
         graph = self.window["-CANVAS-"]
         graph.erase()
-        self.grid = Grid(self.tileParams, self.canvas_base_pixel_x, self.canvas_base_pixel_y)
+        self.grid = Grid(self.tileParams)
         self.grid.load_from_array(grid_image)
-        self.update_canvas(self.grid.image)
+        self.update_canvas_from_arr(self.grid.image)
 
         self.update_window_from_tileparams(new_load=True)
     

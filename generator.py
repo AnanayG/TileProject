@@ -149,10 +149,8 @@ class RectanglularGrid():
         return image
 
 class Grid:
-    def __init__(self, tileParams, base_pixel_x, base_pixel_y) -> None:
+    def __init__(self, tileParams) -> None:
         self.tileParams = tileParams
-        self.base_pixel_x = base_pixel_x
-        self.base_pixel_y = base_pixel_y
     
     def generate_grid(self):
         self.rect = RectanglularGrid(tileParams  = self.tileParams,
@@ -182,25 +180,10 @@ class Grid:
     def update_tiled_image(self, image, mode="-TILED_Repeated-"):
         self.tiled_image = image_tiled(image, mode=mode)
 
-    def convert_pixel_coordinates_to_unit_coordinates(self, pixel_x, pixel_y):
-        pixel_x = pixel_x - self.base_pixel_x
-        pixel_y = pixel_y - self.base_pixel_y
-
-        if (pixel_x >= self.tileParams.NEW_TILE_PX_WIDTH or pixel_x < 0):
-            return (None, None)
-        if (pixel_y >= self.tileParams.NEW_TILE_PX_HEIGHT or pixel_y < 0):
-            return (None, None)
-        
-        x = pixel_x//self.tileParams.pixel_width_plus_grout
-        y = pixel_y//self.tileParams.pixel_height_plus_grout
-
-        return (x,y)
-
     def update_symm(self, tileParams):
         self.rect.update_symm(tileParams)
     
-    def color_pixel(self, image, pixel_x, pixel_y, new_color):
-        x,y = self.convert_pixel_coordinates_to_unit_coordinates(pixel_x, pixel_y)
+    def color_pixel(self, image, x,y, new_color):
         if x is None or y is None:
             return image
         
@@ -219,8 +202,7 @@ class Grid:
         self.image = newImage
         self.tileParams.add_gloss = add_gloss
 
-    def get_pixel_color(self, pixel_x, pixel_y):
-        x,y = self.convert_pixel_coordinates_to_unit_coordinates(pixel_x, pixel_y)
+    def get_pixel_color(self, x,y):
         if x is None or y is None:
             return None, None
         
