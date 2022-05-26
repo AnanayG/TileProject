@@ -13,6 +13,8 @@ class App:
         self.canvas_dimensions = [800, 1000]
         self.canvas_base_pixel_x = 20
         self.canvas_base_pixel_y = 45
+        self.canvas_visible_area = (0, 0,
+                 self.canvas_dimensions[0], self.canvas_dimensions[1])
 
         self.tiled_view_dimensions = [400,400]
         self.tiled_base_pixel_x = 0
@@ -22,9 +24,9 @@ class App:
         self.delta   = 1.3  # zoom step magnitude
 
         self.keyboard_mapping_to_event = {'r':'-Brush-' , 'R':'-Brush-',
-                                 'e':'-Eraser-', 'E':'-Eraser-',
-                                 'g':'-Color_Swapper-', 'G':'-Color_Swapper-',
-                                 'h':'-Color_Picker-', 'H':'-Color_Picker-',
+                                          'e':'-Eraser-', 'E':'-Eraser-',
+                                          'g':'-Color_Swapper-', 'G':'-Color_Swapper-',
+                                          'h':'-Color_Picker-', 'H':'-Color_Picker-',
                                  ' ':'-UPDATE_TITLED_VIEW-'}
         self.tool_to_canvas_cursor = {'-Brush-'         :'plus',
                                       '-Eraser-'        :'dot',
@@ -44,6 +46,7 @@ class App:
         self.view_rotated_view_options = True
 
         self.add_gloss = False
+        self.auto_update_titled_view = False
 
         self.init_values()
         self.init_graphics()
@@ -179,6 +182,7 @@ class App:
            sg.Radio('Anticlockwise', 'rotated_mode_options', key='-TILED_Rotated_ANTI_CLK-' , enable_events=True)]
         ]
         right_pane = [
+          [sg.Checkbox('Auto Update Tiled View', enable_events=True, key='-AUTO_UPDATE_TITLED_VIEW-', default=self.auto_update_titled_view)],
           [sg.Button(button_text='Update titled view', key='-UPDATE_TITLED_VIEW-', tooltip='Press SPACE')],
           [sg.Radio('Rotated',  'tile_mode', key='-TILED_Rotated-' , enable_events=True, default=True),
            sg.Radio('Mirrored', 'tile_mode', key='-TILED_Mirrored-' , enable_events=True),
@@ -192,6 +196,10 @@ class App:
         ]
         
         self.window = sg.Window('Application', layout, finalize=True, resizable=True, return_keyboard_events=True)
+        self.set_canvas_bindings()
+        self.gen_new_image()
+
+    def set_canvas_bindings(self):
         #these are used for canvas, shouldn't change anything for the whole application
         self.window.TKroot.unbind('<Control-ButtonPress-1>')
         self.window.TKroot.unbind('<Control-B1-Motion>')
@@ -206,8 +214,6 @@ class App:
         self.canvas.bind('<MouseWheel>', self.wheel)  # with Windows and MacOS, but not Linux
         self.canvas.bind('<Button-5>',   self.wheel)  # only with Linux, wheel scroll down
         self.canvas.bind('<Button-4>',   self.wheel)  # only with Linux, wheel scroll up
-
-        self.gen_new_image()
 
     def wheel(self, event):
         ''' Zoom with mouse wheel '''
@@ -242,8 +248,7 @@ class App:
         ''' Remember previous coordinates for scrolling with the mouse '''
         self.canvas.scan_mark(event.x, event.y)
         self.move_from_pos = (event.x, event.y)
-        # print(f" move_from: {event.x=}, {event.y=}")
-
+    
     def move_to(self, event):
         ''' Drag (move) canvas to the new position '''
         self.canvas.scan_dragto(event.x, event.y, gain=1)
@@ -251,26 +256,33 @@ class App:
     
     def show_image(self, event=None):
         ''' Show image on the Canvas '''
-        bbox1 = self.canvas.bbox(self.container)  # get image area
+        # 1. this is the bounding box of the image
+        bbox1 = self.canvas.bbox(self.container)
         # Remove 1 pixel shift at the sides of the bbox1
         bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
-        self.canvas_bb = bbox1
+        self.canvas_image_bb = bbox1
 
-        bbox2 = (self.canvas.canvasx(0),  # get visible area of the canvas
+        # 2. get visible area of the canvas
+        bbox2 = (self.canvas.canvasx(0), 
                  self.canvas.canvasy(0),
                  self.canvas.canvasx(self.canvas.winfo_width()),
                  self.canvas.canvasy(self.canvas.winfo_height()))
+        self.canvas_visible_area = bbox2
         
-        bbox = [min(bbox1[0], bbox2[0]), min(bbox1[1], bbox2[1]),  # get scroll region box
-                max(bbox1[2], bbox2[2]), max(bbox1[3], bbox2[3])]
-        if bbox[0] == bbox2[0] and bbox[2] == bbox2[2]:  # whole image in the visible area
-            bbox[0] = bbox1[0]
-            bbox[2] = bbox1[2]
-        if bbox[1] == bbox2[1] and bbox[3] == bbox2[3]:  # whole image in the visible area
-            bbox[1] = bbox1[1]
-            bbox[3] = bbox1[3]
-        self.canvas.configure(scrollregion=bbox)  # set scroll region
-        x1 = max(bbox2[0] - bbox1[0], 0)  # get coordinates (x1,y1,x2,y2) of the image tile
+
+        # 3. this configures the scrollregion, if a scroll bar is needed.
+        # bbox = [min(bbox1[0], bbox2[0]), min(bbox1[1], bbox2[1]),  # get scroll region box
+        #         max(bbox1[2], bbox2[2]), max(bbox1[3], bbox2[3])]
+        # if bbox[0] == bbox2[0] and bbox[2] == bbox2[2]:  # whole image in the visible area
+        #     bbox[0] = bbox1[0]
+        #     bbox[2] = bbox1[2]
+        # if bbox[1] == bbox2[1] and bbox[3] == bbox2[3]:  # whole image in the visible area
+        #     bbox[1] = bbox1[1]
+        #     bbox[3] = bbox1[3]
+        # self.canvas.configure(scrollregion=bbox)  # set scroll region
+
+        # 4. (x1,y1,x2,y2) is the coordinates of the image tile inside the VISIBLE canvas
+        x1 = max(bbox2[0] - bbox1[0], 0)  
         y1 = max(bbox2[1] - bbox1[1], 0)
         x2 = min(bbox2[2], bbox1[2]) - bbox1[0]
         y2 = min(bbox2[3], bbox1[3]) - bbox1[1]
@@ -284,18 +296,19 @@ class App:
             self.canvas.lower(imageid)  # set image into background
             self.canvas.imagetk = imagetk  # keep an extra reference to prevent garbage-collection
 
-
     def gen_new_image(self):
         graph = self.window["-CANVAS-"]
         graph.erase()
 
-        base_x, base_y = self.canvas_base_pixel_x, self.canvas_base_pixel_y
         self.grid = Grid(self.tileParams)
         self.grid.generate_grid()
 
         (self.width, self.height, depth) = self.grid.image.shape
+
+        base_x, base_y = (self.canvas_base_pixel_x + self.canvas_visible_area[0],
+                          self.canvas_base_pixel_y + self.canvas_visible_area[1])
         self.container = self.canvas.create_rectangle(base_x, base_y,
-                    base_x+self.width, base_y+self.height, width=1, tags="image_bb")
+                    base_x+self.width, base_y+self.height, width=1)
         
         self.update_canvas_from_arr(self.grid.image)
 
@@ -427,7 +440,7 @@ class App:
               self.window.Element('-CANVAS-').SetFocus()
               # print(values[event])
               
-              x,y = self.convert_pixel_coordinates_to_unit_coordinates(values[event], self.canvas_bb)
+              x,y = self.convert_pixel_coordinates_to_unit_coordinates(values[event])
               pixel_color, gr_color = self.grid.get_pixel_color(x,y)
               if pixel_color is None or gr_color is None:
                 # print("OUT OF BOUNDS")
@@ -451,7 +464,8 @@ class App:
               else:
                 self.grid.color_pixel(self.grid.image, x,y, pixel_color_picked)
                 self.update_canvas_from_arr(self.grid.image)
-                self.update_titled_view(self.grid.image)
+                if self.auto_update_titled_view is True:
+                  self.update_titled_view(self.grid.image)
 
             elif event.startswith('Save'):
               if 'Image' in event:
@@ -489,6 +503,9 @@ class App:
               self.window['-CANVAS-'].Update(background_color=color)
 
             elif event == '-UPDATE_TITLED_VIEW-':
+              self.update_titled_view(self.grid.image)
+            elif event == '-AUTO_UPDATE_TITLED_VIEW-':
+              self.auto_update_titled_view = not self.auto_update_titled_view
               self.update_titled_view(self.grid.image)
             elif event == '-Generate-':
               self.window.Element('-CANVAS-').SetFocus()
@@ -563,12 +580,16 @@ class App:
           gr = self.tileParams.GROUTING_COLOR
           self.window['-set_grouting_color_chooser-'].Update(button_color=(gr.get_hex(), gr.get_hex()))
             
-    def convert_pixel_coordinates_to_unit_coordinates(self, selected_pixel, canvas_bb):
-        pixel_x = selected_pixel[0] - canvas_bb[0]
-        pixel_y = selected_pixel[1] - canvas_bb[1]
+    def convert_pixel_coordinates_to_unit_coordinates(self, selected_pixel):
+        true_coordinates = (selected_pixel[0] + self.canvas_visible_area[0],
+                            selected_pixel[1] + self.canvas_visible_area[1])
+
+        canvas_image_bb = self.canvas_image_bb
+        pixel_x = true_coordinates[0] - canvas_image_bb[0]
+        pixel_y = true_coordinates[1] - canvas_image_bb[1]
         
-        canvas_width  = canvas_bb[2] - canvas_bb[0]
-        canvas_height = canvas_bb[3] - canvas_bb[1]
+        canvas_width  = canvas_image_bb[2] - canvas_image_bb[0]
+        canvas_height = canvas_image_bb[3] - canvas_image_bb[1]
 
         w_fac = canvas_width/self.tileParams.NEW_TILE_PX_WIDTH
         h_fac = canvas_height/self.tileParams.NEW_TILE_PX_HEIGHT
@@ -576,7 +597,7 @@ class App:
         unit_width  = self.tileParams.pixel_width_plus_grout * w_fac
         unit_height = self.tileParams.pixel_height_plus_grout * h_fac
 
-        # print(f"{canvas_bb=} {selected_pixel=} {w_fac=} {h_fac=}")
+        # print(f"{canvas_image_bb=} {true_coordinates=} {selected_pixel=} {w_fac=} {h_fac=}")
         # print(f"{pixel_x=} {pixel_y=} {unit_width=} {unit_height=}")
 
         if (pixel_x >= canvas_width or pixel_x < 0):
