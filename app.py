@@ -42,11 +42,6 @@ class App:
         self.bg_color_picked = Color(hexcode='#808080', name='bg_default')
         self.disabled_color  = Color(hexcode='#808080', name='disabled')
         self.enabled_color   = Color(hexcode='#ffffff', name='enabled')
-        
-        self.view_rotated_view_options = True
-
-        self.add_gloss = False
-        self.auto_update_titled_view = False
 
         self.init_values()
         self.init_graphics()
@@ -59,13 +54,12 @@ class App:
         
         self.tool_picked = '-Brush-'
         self.tiled_view_mode = '-TILED_Rotated_CLK-'
+
+        self.add_gloss = False
+        self.auto_update_titled_view = False
+        self.view_rotated_view_options = True
     
     def init_graphics(self):
-        self.graph = sg.Graph((500, 500), (0, 0), (450, 450),
-                              key='-GRAPH-',
-                              change_submits=True,
-                              drag_submits=False,
-                              background_color='lightblue')
         # ------ Menu Definition ------ #
         menu_def = [['&File', ['&Load PTG', 'Save &PTG', '&Save Image', 'Save &Tiled Image','E&xit']],
                     ['&Edit', ['Change &Canvas Color', 'Paste', ['Special', 'Normal', ], 'Undo'], ],
@@ -197,7 +191,7 @@ class App:
         
         self.window = sg.Window('Application', layout, finalize=True, resizable=True, return_keyboard_events=True)
         self.set_canvas_bindings()
-        self.gen_new_image()
+        self.load_image_to_canvas()
 
     def set_canvas_bindings(self):
         #these are used for canvas, shouldn't change anything for the whole application
@@ -296,19 +290,22 @@ class App:
             self.canvas.lower(imageid)  # set image into background
             self.canvas.imagetk = imagetk  # keep an extra reference to prevent garbage-collection
 
-    def gen_new_image(self):
+    def load_image_to_canvas(self, grid_image_arr=None):
         graph = self.window["-CANVAS-"]
         graph.erase()
 
         self.grid = Grid(self.tileParams)
-        self.grid.generate_grid()
+        if grid_image_arr is not None:
+          self.grid.load_from_array(grid_image_arr)
+        else:
+          self.grid.generate_grid()
 
         (self.width, self.height, depth) = self.grid.image.shape
 
         base_x, base_y = (self.canvas_base_pixel_x + self.canvas_visible_area[0],
                           self.canvas_base_pixel_y + self.canvas_visible_area[1])
         self.container = self.canvas.create_rectangle(base_x, base_y,
-                    base_x+self.width, base_y+self.height, width=1)
+                    base_x+self.width, base_y+self.height, width=0)
         
         self.update_canvas_from_arr(self.grid.image)
 
@@ -468,11 +465,11 @@ class App:
                   self.update_titled_view(self.grid.image)
 
             elif event.startswith('Save'):
-              if 'Image' in event:
+              if 'Image' in event:  # Save Image, Save Tiled Image
                 file_loc = sg.popup_get_file(event, no_window=True, modal=True,
                           default_extension = 'png',
                           save_as=True, file_types=(('PNG', '.png'), ('JPG', '.jpg')))
-              else:
+              else:                 # Save PTG
                 file_loc = sg.popup_get_file(event, no_window=True, modal=True,
                           default_extension = 'ptg',
                           save_as=True, file_types=[('PTG', '.ptg')])
@@ -511,7 +508,7 @@ class App:
               self.window.Element('-CANVAS-').SetFocus()
               print("Generate pressed! tile_height: ", values['-TILE_HEIGHT-'],  "tile_width: ", values['-TILE_WIDTH-'])
               self.update_tileparams(values)
-              self.gen_new_image()
+              self.load_image_to_canvas()
 
     def update_tileparams(self, values):
         height        = convert_to_int(values['-TILE_HEIGHT-'])
@@ -641,12 +638,7 @@ class App:
         self.tileParams = pickle.load(inp)
         grid_image = pickle.load(inp)
         
-        graph = self.window["-CANVAS-"]
-        graph.erase()
-        self.grid = Grid(self.tileParams)
-        self.grid.load_from_array(grid_image)
-        self.update_canvas_from_arr(self.grid.image)
-
+        self.load_image_to_canvas(grid_image_arr=grid_image)
         self.update_window_from_tileparams(new_load=True)
     
     def update_window_from_tileparams(self, new_load=False):
