@@ -362,7 +362,11 @@ class App:
 
                   self.grid.change_grouting_color(self.grouting_color_picked)
                   self.update_canvas_from_arr(self.grid.image)
-
+            elif event == '-GROUTING_SIZE-':
+                self.window.Element('-CANVAS-').SetFocus()
+                self.grid.change_grouting_size(int(values[event]))
+                self.update_canvas_from_arr(self.grid.image)
+            
             elif event.startswith('-UNIT_'):
                 self.window[event].Update(background_color=self.enabled_color.get_hex())
                 mode = "pixel_number" if "NUM" in event else "pixel_size"

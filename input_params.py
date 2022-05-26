@@ -93,6 +93,17 @@ class TileParams:
         print(f"RESIZING IMAGE TO WIDTH:{self.NEW_TILE_PX_WIDTH}, \
                                   HEIGHT:{self.NEW_TILE_PX_HEIGHT}")
 
+    def update_grouting_size(self, NEW_GROUTING_SIZE):
+        # no_per_width, no_per_height is unaffected
+        # pixel_height_plus_grout, pixel_width_plus_grout is also unaffected
+        print(f"updating grouting size to {NEW_GROUTING_SIZE}")
+        self.GROUTING_SIZE    = NEW_GROUTING_SIZE
+        self.GROUTING_SIZE_PX = self.GROUTING_SIZE*self.PIXELS_PER_MM
+        self.GROUTING_OFFSET  = int(self.GROUTING_SIZE_PX/2)
+        if self.mode == "pixel_size":
+            self.rectangle_width  = self.pixel_width_plus_grout  - self.GROUTING_SIZE
+            self.rectangle_height = self.pixel_height_plus_grout - self.GROUTING_SIZE
+    
     def set_unit_size(self):
         if self.rectangle_width is not None and \
             self.rectangle_height is not None:
