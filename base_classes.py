@@ -1,6 +1,4 @@
 from dataclasses import dataclass
-from PIL import Image
-from io import BytesIO
 
 @dataclass
 class Color():
@@ -62,14 +60,6 @@ class Point():
         else:
             return Point(int(self.x + x_off), int(self.y + y_off))
 
-def array_to_data(array, resize=None):
-    im = Image.fromarray(array)
-    if resize is not None:
-        im = im.resize(resize)
-    with BytesIO() as output:
-        im.save(output, format="PNG")
-        data = output.getvalue()
-    return data
 
 def convert_to_int(var):
     try:
