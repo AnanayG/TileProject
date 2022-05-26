@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-from base_classes import Color, convert_to_int
+from base_classes import Color, Failure, convert_to_int
 from generator import Grid
 from display_image import colorSelectorTkWindow, about_me
 from input_params import TileParams
@@ -300,7 +300,7 @@ class App:
         else:
           self.grid.generate_grid()
 
-        (self.width, self.height, depth) = self.grid.image.shape
+        (self.height, self.width, depth) = self.grid.image.shape
 
         base_x, base_y = (self.canvas_base_pixel_x + self.canvas_visible_area[0],
                           self.canvas_base_pixel_y + self.canvas_visible_area[1])
@@ -411,8 +411,9 @@ class App:
               
             elif event.endswith('_SYMM-'):
               print(f"{event} called")
-              self.update_tileparams(values)
-              self.grid.update_symm(self.tileParams)
+              ret = self.update_tileparams(values)
+              if type(ret) is not Failure:
+                self.grid.update_symm(self.tileParams)
 
             elif event in ['-Eraser-', '-Brush-', '-Color_Swapper-', '-Color_Picker-']:
               self.window.Element('-CANVAS-').SetFocus()
@@ -507,8 +508,9 @@ class App:
             elif event == '-Generate-':
               self.window.Element('-CANVAS-').SetFocus()
               print("Generate pressed! tile_height: ", values['-TILE_HEIGHT-'],  "tile_width: ", values['-TILE_WIDTH-'])
-              self.update_tileparams(values)
-              self.load_image_to_canvas()
+              ret = self.update_tileparams(values)
+              if type(ret) is not Failure:
+                self.load_image_to_canvas()
 
     def update_tileparams(self, values):
         height        = convert_to_int(values['-TILE_HEIGHT-'])
@@ -526,14 +528,15 @@ class App:
         right_d_symm    = values['-RIGHT_D_SYMM-']
         left_d_symm     = values['-LEFT_D_SYMM-']
 
-
-        self.tileParams.update_params(TILE_WIDTH=width, TILE_HEIGHT=height,
+        ret = self.tileParams.update_params(TILE_WIDTH=width, TILE_HEIGHT=height,
                       GROUTING_SIZE=grouting_size,
                       rectangle_width=unit_width, rectangle_height=unit_height,
                       num_width=unit_num_width, num_height=unit_num_height,
                       vertical_symm=vertical_symm, horizontal_symm=horizontal_symm,
                       right_d_symm=right_d_symm, left_d_symm=left_d_symm)
-
+        if type(ret) is Failure:
+          return ret.run()
+          
         #update the grouting and the blend/bg colors
         self.tileParams.update_color(GROUTING_COLOR=self.grouting_color_picked)
         if self.blend_mode_on is True:

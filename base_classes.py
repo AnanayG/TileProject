@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import PySimpleGUI as sg
 
 @dataclass
 class Color():
@@ -60,6 +61,14 @@ class Point():
         else:
             return Point(int(self.x + x_off), int(self.y + y_off))
 
+class Failure():
+    def __init__(self, message):
+        self.message = message
+    
+    def run(self):
+        sg.PopupQuick(self.message, auto_close=False, 
+                modal=True, keep_on_top= True)
+        return self
 
 def convert_to_int(var):
     try:

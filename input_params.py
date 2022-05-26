@@ -1,4 +1,4 @@
-from base_classes import Color
+from base_classes import Color, Failure
 
 class TileParams:
     def __init__(self):
@@ -115,12 +115,6 @@ class TileParams:
                 vertical_symm=None, horizontal_symm=None,
                 right_d_symm=None, left_d_symm=None):
 
-        ##TODO: add support for no_of_pixel (_per_side)
-        
-        ## tile_size = no_of_pixel * (pixel_unit_size + grouting_size)
-        # tile_size=300, pixel_unit_size=2, grouting_size=1 so no_of_pixel=?
-        # tile_size=300, pixel_unit_size=2, no_of_pixel=39  so grouting_size=?
-
         if TILE_WIDTH is not None:
             self.TILE_WIDTH  = TILE_WIDTH
         if TILE_HEIGHT is not None:
@@ -150,4 +144,14 @@ class TileParams:
             self.symmetry['left_diagonal'] = left_d_symm
         
         self.calculate_params()
+        return self.check_errors()
+    
+    def check_errors(self):
+        # under diagonal symmetry, no_per_width must be same as no_per_height
+        if self.symmetry['right_diagonal'] is True or \
+            self.symmetry['left_diagonal'] is True:
+            if self.no_per_width != self.no_per_height:
+                error_msg = "unit_num_width:{0} unit_num_height:{1} must be same under diagonal symmetry. \
+                    \nEnter newer values and try again!".format(self.no_per_width, self.no_per_height)
+                return Failure(error_msg)
 
