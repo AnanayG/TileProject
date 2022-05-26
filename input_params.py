@@ -60,7 +60,9 @@ class TileParams:
                 self.PIXEL_COLORS = PIXEL_COLORS
                 self.PIXEL_COLORS_p = PIXEL_COLORS_p
             else:
-                print("Sum of blend colors is not 100. Using older colors")
+                error_msg = "Sum of percentages is not 100 \
+                    \nEnter newer values and try again!"
+                return Failure(error_msg)
         elif type(SOLID_BG_COLOR) is Color:
             self.PIXEL_COLORS   = [SOLID_BG_COLOR]
             self.PIXEL_COLORS_p = [1]

@@ -544,7 +544,9 @@ class App:
         #update the grouting and the blend/bg colors
         self.tileParams.update_color(GROUTING_COLOR=self.grouting_color_picked)
         if self.blend_mode_on is True:
-          self.tileParams.update_color(BLEND_MODE_COLORS=self.blend_mode_selections)
+          ret = self.tileParams.update_color(BLEND_MODE_COLORS=self.blend_mode_selections)
+          if type(ret) is Failure:
+            return ret.run()
         else:
           self.tileParams.update_color(SOLID_BG_COLOR=self.bg_color_picked)
 
