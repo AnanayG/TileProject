@@ -298,7 +298,7 @@ class App:
         if grid_image_arr is not None:
           self.grid.load_from_array(grid_image_arr)
         else:
-          self.grid.generate_grid()
+          self.grid.generate_grid(self.blend_mode_on)
 
         (self.height, self.width, depth) = self.grid.image.shape
 

@@ -163,7 +163,7 @@ class Grid:
     def __init__(self, tileParams) -> None:
         self.tileParams = tileParams
     
-    def generate_grid(self):
+    def generate_grid(self, blend_mode_on):
         self.rect = RectanglularGrid(tileParams  = self.tileParams,
                                      pixel_shape = RectangularPixel)
 
@@ -175,10 +175,11 @@ class Grid:
         #this creates blend pattern
         self.rect.techniqueBlend(image)
 
-        #this colorises a random pixel
-        num_width  = np.random.randint(self.rect.no_per_width)
-        num_height = np.random.randint(self.rect.no_per_height)
-        self.rect.color_pixel_and_symmetrize(image, num_width, num_height, pixel_color=self.tileParams.new_color)
+        if blend_mode_on is False:
+            #this colorises a random pixel
+            num_width  = np.random.randint(self.rect.no_per_width)
+            num_height = np.random.randint(self.rect.no_per_height)
+            self.rect.color_pixel_and_symmetrize(image, num_width, num_height, pixel_color=self.tileParams.new_color)
 
         self.image = image
 
