@@ -16,7 +16,8 @@ class App:
         self.canvas_visible_area = (0, 0,
                  self.canvas_dimensions[0], self.canvas_dimensions[1])
 
-        self.tiled_view_dimensions = [400,400]
+        self.tiled_view_px_dimensions = [400,400]
+        self.room_dimensions          = [1200, 1200]
         self.tiled_base_pixel_x = 0
         self.tiled_base_pixel_y = 0
 
@@ -163,9 +164,9 @@ class App:
           drag_submits=True)
         
         tiled_canvas = sg.Graph(
-          canvas_size=(self.tiled_view_dimensions[0], self.tiled_view_dimensions[1]),
-          graph_bottom_left=(0, self.tiled_view_dimensions[1]),
-          graph_top_right=(self.tiled_view_dimensions[0], 0),
+          canvas_size=(self.tiled_view_px_dimensions[0], self.tiled_view_px_dimensions[1]),
+          graph_bottom_left=(0, self.tiled_view_px_dimensions[1]),
+          graph_top_right=(self.tiled_view_px_dimensions[0], 0),
           key="-TILED_CANVAS-",
           change_submits=False,  # mouse click events
           background_color='lightblue',
@@ -176,6 +177,11 @@ class App:
            sg.Radio('Anticlockwise', 'rotated_mode_options', key='-TILED_Rotated_ANTI_CLK-' , enable_events=True)]
         ]
         right_pane = [
+          [sg.Text('Room Size', font='ANY 15')],
+          [sg.Column([[sg.Text('Height: ', size=(12,1)), sg.In(k='-ROOM_HEIGHT-', size=(10,1), default_text=self.room_dimensions[0])]]),
+           sg.Column([[sg.Text('Width: ' , size=(12,1)), sg.In(k='-ROOM_WIDTH-' , size=(10,1), default_text=self.room_dimensions[1])]])],
+          [sg.HorizontalSeparator()],
+
           [sg.Checkbox('Auto Update Tiled View', enable_events=True, key='-AUTO_UPDATE_TITLED_VIEW-', default=self.auto_update_titled_view)],
           [sg.Button(button_text='Update titled view', key='-UPDATE_TITLED_VIEW-', tooltip='Press SPACE')],
           [sg.Radio('Rotated',  'tile_mode', key='-TILED_Rotated-' , enable_events=True, default=True),
@@ -183,6 +189,7 @@ class App:
            sg.Radio('Repeated', 'tile_mode', key='-TILED_Repeated-', enable_events=True)],
           [self.collapse(rotated_view_options, '-TILED_Rotated_options-', self.view_rotated_view_options)],
           [sg.HorizontalSeparator()],
+
           [tiled_canvas]
         ]
         layout = [
@@ -467,7 +474,7 @@ class App:
                 self.grid.color_pixel(self.grid.image, x,y, pixel_color_picked)
                 self.update_canvas_from_arr(self.grid.image)
                 if self.auto_update_titled_view is True:
-                  self.update_titled_view(self.grid.image)
+                  self.update_titled_view(self.grid.image, values)
 
             elif event.startswith('Save'):
               if 'Image' in event:  # Save Image, Save Tiled Image
@@ -505,10 +512,10 @@ class App:
               self.window['-CANVAS-'].Update(background_color=color)
 
             elif event == '-UPDATE_TITLED_VIEW-':
-              self.update_titled_view(self.grid.image)
+              self.update_titled_view(self.grid.image, values)
             elif event == '-AUTO_UPDATE_TITLED_VIEW-':
               self.auto_update_titled_view = not self.auto_update_titled_view
-              self.update_titled_view(self.grid.image)
+              self.update_titled_view(self.grid.image, values)
             elif event == '-Generate-':
               self.window.Element('-CANVAS-').SetFocus()
               print("Generate pressed! tile_height: ", values['-TILE_HEIGHT-'],  "tile_width: ", values['-TILE_WIDTH-'])
@@ -621,15 +628,30 @@ class App:
         self.image = Image.fromarray(image)
         self.show_image()
 
-    def update_titled_view(self, image):
+    def update_titled_view(self, image, values):
         self.grid.update_tiled_image(image, mode=self.tiled_view_mode)
-
         tiled_image = Image.fromarray(self.grid.tiled_image)
-        tiled_image = tiled_image.resize(self.tiled_view_dimensions)
         
+        self.room_dimensions[0] = values['-ROOM_HEIGHT-']
+        self.room_dimensions[1] = values['-ROOM_WIDTH-' ]
+        
+        tile_width, tile_height, depth = self.grid.tiled_image.shape
+        room_height = convert_to_int(self.room_dimensions[0])
+        room_width  = convert_to_int(self.room_dimensions[1])
+        scale       = min(tile_height/room_height, tile_width/room_width)
+        scale       = scale/2.0
+
+        # update the size of the tiled_view space
+        resize_dims = [int(i*scale) for i in self.tiled_view_px_dimensions]
+        tiled_image = tiled_image.resize(resize_dims)
         imagetk = ImageTk.PhotoImage(tiled_image)
-        imageid = self.tiled_canvas.create_image(0, 0,
-                                            anchor='nw', image=imagetk)
+
+        w, h   = self.tiled_view_px_dimensions
+        for i in range(0, w, resize_dims[0]):
+          for j in range(0, h, resize_dims[1]):
+            imageid = self.tiled_canvas.create_image(i, j,
+                                        anchor='nw', image=imagetk)
+        
         self.tiled_canvas.lower(imageid)    # set image into background
         self.tiled_canvas.imagetk = imagetk  # keep an extra reference to prevent garbage-collection
 
