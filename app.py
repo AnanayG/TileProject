@@ -476,7 +476,7 @@ class App:
                 if self.auto_update_titled_view is True:
                   self.room_dimensions[0] = values['-ROOM_HEIGHT-'] if values['-ROOM_HEIGHT-'] is not None else self.room_dimensions[0]
                   self.room_dimensions[1] = values['-ROOM_WIDTH-' ] if values['-ROOM_WIDTH-'] is not None else self.room_dimensions[1]
-                  self.update_titled_view(self.grid.image, values)
+                  self.update_titled_view(self.grid.image)
 
             elif event.startswith('Save'):
               if 'Image' in event:  # Save Image, Save Tiled Image
@@ -517,12 +517,12 @@ class App:
             elif event == '-UPDATE_TITLED_VIEW-':
               self.room_dimensions[0] = values['-ROOM_HEIGHT-'] if values['-ROOM_HEIGHT-'] is not None else self.room_dimensions[0]
               self.room_dimensions[1] = values['-ROOM_WIDTH-' ] if values['-ROOM_WIDTH-'] is not None else self.room_dimensions[1]
-              self.update_titled_view(self.grid.image, values)
+              self.update_titled_view(self.grid.image)
             elif event == '-AUTO_UPDATE_TITLED_VIEW-':
               self.auto_update_titled_view = not self.auto_update_titled_view
               self.room_dimensions[0] = values['-ROOM_HEIGHT-'] if values['-ROOM_HEIGHT-'] is not None else self.room_dimensions[0]
               self.room_dimensions[1] = values['-ROOM_WIDTH-' ] if values['-ROOM_WIDTH-'] is not None else self.room_dimensions[1]
-              self.update_titled_view(self.grid.image, values)
+              self.update_titled_view(self.grid.image)
             elif event == '-Generate-':
               self.window.Element('-CANVAS-').SetFocus()
               print("Generate pressed! tile_height: ", values['-TILE_HEIGHT-'],  "tile_width: ", values['-TILE_WIDTH-'])
