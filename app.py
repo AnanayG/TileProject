@@ -4,7 +4,7 @@ from generator import Grid
 from display_image import colorSelectorTkWindow, about_me
 from input_params import TileParams
 import pickle
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageGrab
 
 # sg.theme('Dark Teal')
 
@@ -474,6 +474,8 @@ class App:
                 self.grid.color_pixel(self.grid.image, x,y, pixel_color_picked)
                 self.update_canvas_from_arr(self.grid.image)
                 if self.auto_update_titled_view is True:
+                  self.room_dimensions[0] = values['-ROOM_HEIGHT-'] if values['-ROOM_HEIGHT-'] is not None else self.room_dimensions[0]
+                  self.room_dimensions[1] = values['-ROOM_WIDTH-' ] if values['-ROOM_WIDTH-'] is not None else self.room_dimensions[1]
                   self.update_titled_view(self.grid.image, values)
 
             elif event.startswith('Save'):
@@ -490,6 +492,7 @@ class App:
                 continue
               if event == "Save Tiled Image":
                 print('Saving tiled view to:', file_loc)
+                # self.getter(self.tiled_canvas, file_loc)
                 self.grid.save_tiled_view(filename=file_loc)
               elif event == "Save PTG":
                 print('Saving PTG to:', file_loc)
@@ -512,9 +515,13 @@ class App:
               self.window['-CANVAS-'].Update(background_color=color)
 
             elif event == '-UPDATE_TITLED_VIEW-':
+              self.room_dimensions[0] = values['-ROOM_HEIGHT-'] if values['-ROOM_HEIGHT-'] is not None else self.room_dimensions[0]
+              self.room_dimensions[1] = values['-ROOM_WIDTH-' ] if values['-ROOM_WIDTH-'] is not None else self.room_dimensions[1]
               self.update_titled_view(self.grid.image, values)
             elif event == '-AUTO_UPDATE_TITLED_VIEW-':
               self.auto_update_titled_view = not self.auto_update_titled_view
+              self.room_dimensions[0] = values['-ROOM_HEIGHT-'] if values['-ROOM_HEIGHT-'] is not None else self.room_dimensions[0]
+              self.room_dimensions[1] = values['-ROOM_WIDTH-' ] if values['-ROOM_WIDTH-'] is not None else self.room_dimensions[1]
               self.update_titled_view(self.grid.image, values)
             elif event == '-Generate-':
               self.window.Element('-CANVAS-').SetFocus()
@@ -523,6 +530,13 @@ class App:
               if type(ret) is not Failure:
                 self.load_image_to_canvas()
 
+    def getter(self, widget, file_loc):
+        x=self.window.TKroot.winfo_rootx()+widget.winfo_x()
+        y=self.window.TKroot.winfo_rooty()+widget.winfo_y()
+        x1=x+widget.winfo_width()
+        y1=y+widget.winfo_height()
+        ImageGrab.grab().crop((x,y,x1,y1)).save(file_loc)
+    
     def update_tileparams(self, values):
         height        = convert_to_int(values['-TILE_HEIGHT-'])
         width         = convert_to_int(values['-TILE_WIDTH-'])
@@ -628,12 +642,9 @@ class App:
         self.image = Image.fromarray(image)
         self.show_image()
 
-    def update_titled_view(self, image, values):
+    def update_titled_view(self, image):
         self.grid.update_tiled_image(image, mode=self.tiled_view_mode)
         tiled_image = Image.fromarray(self.grid.tiled_image)
-        
-        self.room_dimensions[0] = values['-ROOM_HEIGHT-'] if values['-ROOM_HEIGHT-'] is not None else self.room_dimensions[0]
-        self.room_dimensions[1] = values['-ROOM_WIDTH-' ] if values['-ROOM_WIDTH-'] is not None else self.room_dimensions[1]
         
         tile_width, tile_height, depth = self.grid.tiled_image.shape
         room_height = convert_to_int(self.room_dimensions[0])
@@ -662,19 +673,24 @@ class App:
       with open(file_path, 'wb') as outp:
         pickle.dump(self.tileParams, outp, pickle.HIGHEST_PROTOCOL)
         pickle.dump(self.grid.image, outp, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(self.room_dimensions, outp, pickle.HIGHEST_PROTOCOL)
       
     def load_ptg(self, file_path):
       with open(file_path, 'rb') as inp:
         # DO NOT CHANGE ORDER
         self.tileParams = pickle.load(inp)
         grid_image = pickle.load(inp)
+        self.room_dimensions = pickle.load(inp)
         
         self.load_image_to_canvas(grid_image_arr=grid_image)
         self.update_window_from_tileparams(new_load=True)
+        self.update_titled_view(grid_image)
     
     def update_window_from_tileparams(self, new_load=False):
         if new_load is True:
           self.window['-GROUTING_SIZE-'].Update(self.tileParams.GROUTING_SIZE)
+          self.window['-ROOM_HEIGHT-' ].Update(self.room_dimensions[0])
+          self.window['-ROOM_WIDTH-' ].Update(self.room_dimensions[1])
         self.update_unit_options_en_disable(self.tileParams.mode, new_load)
         self.window['-TILE_WIDTH-' ].Update(self.tileParams.NEW_TILE_PX_WIDTH //self.tileParams.PIXELS_PER_MM)
         self.window['-TILE_HEIGHT-'].Update(self.tileParams.NEW_TILE_PX_HEIGHT//self.tileParams.PIXELS_PER_MM)
