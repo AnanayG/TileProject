@@ -632,8 +632,8 @@ class App:
         self.grid.update_tiled_image(image, mode=self.tiled_view_mode)
         tiled_image = Image.fromarray(self.grid.tiled_image)
         
-        self.room_dimensions[0] = values['-ROOM_HEIGHT-']
-        self.room_dimensions[1] = values['-ROOM_WIDTH-' ]
+        self.room_dimensions[0] = values['-ROOM_HEIGHT-'] if values['-ROOM_HEIGHT-'] is not None else self.room_dimensions[0]
+        self.room_dimensions[1] = values['-ROOM_WIDTH-' ] if values['-ROOM_WIDTH-'] is not None else self.room_dimensions[1]
         
         tile_width, tile_height, depth = self.grid.tiled_image.shape
         room_height = convert_to_int(self.room_dimensions[0])
