@@ -727,7 +727,7 @@ class App:
 if (__name__ == "__main__"):
     from datetime import datetime
     present   = datetime.now()
-    LOCK_DATE = datetime(2022, 6, 11)
+    LOCK_DATE = datetime(2022, 6, 14)
     if present > LOCK_DATE:
       sg.popup('Completed running', 'Demo expired')
     else:
