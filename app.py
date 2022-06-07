@@ -1,3 +1,4 @@
+from math import ceil
 import PySimpleGUI as sg
 from base_classes import Color, Failure, convert_to_int
 from generator import Grid
@@ -21,7 +22,8 @@ class App:
         self.tiled_base_pixel_x = 0
         self.tiled_base_pixel_y = 0
 
-        self.imscale = 1.0  # scale for the canvas image
+        self.imscale = 1.0           # scale for the canvas image
+        self.tiled_view_scale = 1.0  # inverse scale for the tiled image
         self.delta   = 1.3  # zoom step magnitude
 
         self.keyboard_mapping_to_event = {'r':'-Brush-' , 'R':'-Brush-',
@@ -492,8 +494,7 @@ class App:
                 continue
               if event == "Save Tiled Image":
                 print('Saving tiled view to:', file_loc)
-                # self.getter(self.tiled_canvas, file_loc)
-                self.grid.save_tiled_view(filename=file_loc)
+                self.save_tiled_view(file_loc)
               elif event == "Save PTG":
                 print('Saving PTG to:', file_loc)
                 self.save_ptg(file_loc)
@@ -530,13 +531,6 @@ class App:
               if type(ret) is not Failure:
                 self.load_image_to_canvas()
 
-    def getter(self, widget, file_loc):
-        x=self.window.TKroot.winfo_rootx()+widget.winfo_x()
-        y=self.window.TKroot.winfo_rooty()+widget.winfo_y()
-        x1=x+widget.winfo_width()
-        y1=y+widget.winfo_height()
-        ImageGrab.grab().crop((x,y,x1,y1)).save(file_loc)
-    
     def update_tileparams(self, values):
         height        = convert_to_int(values['-TILE_HEIGHT-'])
         width         = convert_to_int(values['-TILE_WIDTH-'])
@@ -649,12 +643,13 @@ class App:
         tile_width, tile_height, depth = self.grid.tiled_image.shape
         room_height = convert_to_int(self.room_dimensions[0])
         room_width  = convert_to_int(self.room_dimensions[1])
-        scale       = min(tile_height/room_height, tile_width/room_width)
-        scale       = scale/2.0
+        self.tiled_view_scale = min(tile_height/room_height, tile_width/room_width)
+        self.tiled_view_scale = self.tiled_view_scale/2.0
 
         # update the size of the tiled_view space
-        resize_dims = [int(i*scale) for i in self.tiled_view_px_dimensions]
-        tiled_image = tiled_image.resize(resize_dims)
+        resize_dims = [int(i*self.tiled_view_scale) for i in self.tiled_view_px_dimensions]
+        tiled_image.thumbnail(resize_dims, Image.LANCZOS)
+        # tiled_image = tiled_image.resize(resize_dims)
         imagetk = ImageTk.PhotoImage(tiled_image)
 
         w, h   = self.tiled_view_px_dimensions
@@ -666,6 +661,19 @@ class App:
         self.tiled_canvas.lower(imageid)    # set image into background
         self.tiled_canvas.imagetk = imagetk  # keep an extra reference to prevent garbage-collection
 
+    def save_tiled_view(self, filepath):
+        tiled_image = Image.fromarray(self.grid.tiled_image)
+        bg_w, bg_h = tiled_image.size
+        num_repeats = 1.0/self.tiled_view_scale
+        
+        new_im = Image.new('RGB', (int(num_repeats*bg_w), int(num_repeats*bg_h)))
+        w, h = new_im.size
+        for i in range(0, w, bg_w):
+            for j in range(0, h, bg_h):
+                new_im.paste(tiled_image, (i, j))
+        new_im.thumbnail((1080, 720), Image.LANCZOS)
+        new_im.save(filepath)
+      
     def play(self):
         self.event_loop()
 
@@ -717,7 +725,13 @@ class App:
       return sg.pin(sg.Column(layout, key=key, visible=visible))
 
 if (__name__ == "__main__"):
-    game = App()
-    game.play()
-    sg.popup('Completed running.', 'Click OK to exit the program')
-    game.window.close()
+    from datetime import datetime
+    present   = datetime.now()
+    LOCK_DATE = datetime(2022, 6, 11)
+    if present > LOCK_DATE:
+      sg.popup('Completed running', 'Demo expired')
+    else:
+      game = App()
+      game.play()
+      sg.popup('Completed running.', 'Click OK to exit the program')
+      game.window.close()
