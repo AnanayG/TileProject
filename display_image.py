@@ -64,9 +64,9 @@ def image_tiled(image, mode='-TILED_Repeated-', row_repeat=2,  col_repeat=2):
 
     elif mode=='-TILED_Rotated_ANTI_CLK-':
         # doesn't factor row_repeat and col_repeat into account, right now - TODO
-        right_upper_image   = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
-        left_bottom_image   = cv2.rotate(image, cv2.cv2.ROTATE_90_COUNTERCLOCKWISE)
-        right_bottom_image  = cv2.rotate(right_upper_image, cv2.cv2.ROTATE_90_CLOCKWISE)
+        right_upper_image   = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+        left_bottom_image   = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        right_bottom_image  = cv2.rotate(right_upper_image, cv2.ROTATE_90_CLOCKWISE)
         
         #the last row/column of pixels between two reflected images is common between adjacent images
         # this last row is the grouting line
@@ -77,9 +77,9 @@ def image_tiled(image, mode='-TILED_Repeated-', row_repeat=2,  col_repeat=2):
     
     elif mode=='-TILED_Rotated_CLK-':
         # doesn't factor row_repeat and col_repeat into account, right now - TODO
-        right_upper_image   = cv2.rotate(image, cv2.cv2.ROTATE_90_COUNTERCLOCKWISE)
-        left_bottom_image   = cv2.rotate(image, cv2.cv2.ROTATE_90_CLOCKWISE)
-        right_bottom_image  = cv2.rotate(right_upper_image, cv2.cv2.ROTATE_90_COUNTERCLOCKWISE)
+        right_upper_image   = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        left_bottom_image   = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+        right_bottom_image  = cv2.rotate(right_upper_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
         
         #the last row/column of pixels between two reflected images is common between adjacent images
         # this last row is the grouting line

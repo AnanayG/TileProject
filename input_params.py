@@ -114,8 +114,8 @@ class TileParams:
         
         if self.no_per_width is not None and \
             self.no_per_height is not None:
-            width  = int(self.TILE_WIDTH/self.no_per_width)  - self.GROUTING_SIZE
-            height = int(self.TILE_WIDTH/self.no_per_height) - self.GROUTING_SIZE
+            width  = int(self.TILE_WIDTH /self.no_per_width)  - self.GROUTING_SIZE
+            height = int(self.TILE_HEIGHT/self.no_per_height) - self.GROUTING_SIZE
             if width <0 or height<0:
                 return (None, None)
             self.mode = "pixel_number"

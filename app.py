@@ -19,18 +19,18 @@ class App:
 
         self.tiled_view_px_dimensions = [400,400]
         self.room_dimensions          = [1200, 1200]
-        self.tiled_base_pixel_x = 0
-        self.tiled_base_pixel_y = 0
+        self.tiled_base_pixel_x       = 0
+        self.tiled_base_pixel_y       = 0
 
         self.imscale = 1.0           # scale for the canvas image
         self.tiled_view_scale = 1.0  # inverse scale for the tiled image
         self.delta   = 1.3  # zoom step magnitude
 
-        self.keyboard_mapping_to_event = {'r':'-Brush-' , 'R':'-Brush-',
-                                          'e':'-Eraser-', 'E':'-Eraser-',
-                                          'g':'-Color_Swapper-', 'G':'-Color_Swapper-',
-                                          'h':'-Color_Picker-', 'H':'-Color_Picker-',
-                                 ' ':'-UPDATE_TITLED_VIEW-'}
+        self.keyboard_mapping_to_event = {'e':'-Brush-', 'E':'-Brush-', 'e:26':'-Brush-', 'E:26':'-Brush-',
+                                          'r':'-Eraser-' , 'R':'-Eraser-', 'r:27':'-Eraser-' , 'R:27':'-Eraser-',
+                                          'g':'-Color_Swapper-', 'G':'-Color_Swapper-', 'g:42':'-Color_Swapper-', 'G:42':'-Color_Swapper-',
+                                          'h':'-Color_Picker-', 'H':'-Color_Picker-', 'h:43':'-Color_Picker-', 'H:43':'-Color_Picker-',
+                                          ' ':'-UPDATE_TITLED_VIEW-', 'space:65':'-UPDATE_TITLED_VIEW-'}
         self.tool_to_canvas_cursor = {'-Brush-'         :'plus',
                                       '-Eraser-'        :'dot',
                                       '-Color_Swapper-' :'crosshair',
@@ -147,8 +147,8 @@ class App:
              title='Symmetry', relief=sg.RELIEF_SUNKEN, tooltip='Check one or multiple')],
           [sg.HorizontalSeparator()],
 
-          [sg.Radio('Brush',        'tool_name', key='-Brush-',         enable_events=True, tooltip='Press r ', default=True),
-           sg.Radio('Eraser',       'tool_name', key='-Eraser-',        enable_events=True, tooltip='Press e '),
+          [sg.Radio('Brush',        'tool_name', key='-Brush-',         enable_events=True, tooltip='Press e ', default=True),
+           sg.Radio('Eraser',       'tool_name', key='-Eraser-',        enable_events=True, tooltip='Press r '),
            sg.Radio('Color Swap'  , 'tool_name', key='-Color_Swapper-', enable_events=True, tooltip='Press g '),
            sg.Radio('Color Picker', 'tool_name', key='-Color_Picker-',  enable_events=True, tooltip='Press h ')],
           [sg.HorizontalSeparator()],
@@ -332,6 +332,8 @@ class App:
                   event in ['-set_pixel_color_chooser-']:
               past_event = None
 
+            # if event == '__TIMEOUT__':
+            #   continue
             #if the event if a KEYBOARD INPUT then change the event variable
             if event in self.keyboard_mapping_to_event.keys():
               event = self.keyboard_mapping_to_event[event]
@@ -483,11 +485,11 @@ class App:
             elif event.startswith('Save'):
               if 'Image' in event:  # Save Image, Save Tiled Image
                 file_loc = sg.popup_get_file(event, no_window=True, modal=True,
-                          default_extension = 'png',
+                          default_extension = '.png',
                           save_as=True, file_types=(('PNG', '.png'), ('JPG', '.jpg')))
               else:                 # Save PTG
                 file_loc = sg.popup_get_file(event, no_window=True, modal=True,
-                          default_extension = 'ptg',
+                          default_extension = '.ptg',
                           save_as=True, file_types=[('PTG', '.ptg')])
 
               if file_loc == '':
@@ -503,7 +505,7 @@ class App:
                 self.grid.save_image(filename=file_loc)
             elif event=='Load PTG':
                 file_loc = sg.popup_get_file(event, no_window=True, modal=True,
-                          default_extension = 'ptg',
+                          default_extension = '.ptg',
                           save_as=False, file_types=[('PTG', '.ptg')])
                 if file_loc == '':
                   continue
@@ -643,11 +645,11 @@ class App:
         tile_width, tile_height, depth = self.grid.tiled_image.shape
         room_height = convert_to_int(self.room_dimensions[0])
         room_width  = convert_to_int(self.room_dimensions[1])
-        self.tiled_view_scale = min(tile_height/room_height, tile_width/room_width)
-        self.tiled_view_scale = self.tiled_view_scale/2.0
+        self.tiled_view_scale = [tile_height/(2.0*room_height), tile_width/(2.0*room_width)]
+        # self.tiled_view_scale = self.tiled_view_scale/2.0
 
         # update the size of the tiled_view space
-        resize_dims = [int(i*self.tiled_view_scale) for i in self.tiled_view_px_dimensions]
+        resize_dims = [int(dim*self.tiled_view_scale[i]) for i, dim in enumerate(self.tiled_view_px_dimensions)]
         tiled_image.thumbnail(resize_dims, Image.LANCZOS)
         # tiled_image = tiled_image.resize(resize_dims)
         imagetk = ImageTk.PhotoImage(tiled_image)
@@ -664,9 +666,9 @@ class App:
     def save_tiled_view(self, filepath):
         tiled_image = Image.fromarray(self.grid.tiled_image)
         bg_w, bg_h = tiled_image.size
-        num_repeats = 1.0/self.tiled_view_scale
+        num_repeats = [1.0/self.tiled_view_scale[0], 1.0/self.tiled_view_scale[1]]
         
-        new_im = Image.new('RGB', (int(num_repeats*bg_w), int(num_repeats*bg_h)))
+        new_im = Image.new('RGB', (int(num_repeats[0]*bg_w), int(num_repeats[1]*bg_h)))
         w, h = new_im.size
         for i in range(0, w, bg_w):
             for j in range(0, h, bg_h):
@@ -727,7 +729,7 @@ class App:
 if (__name__ == "__main__"):
     from datetime import datetime
     present   = datetime.now()
-    LOCK_DATE = datetime(2022, 6, 14)
+    LOCK_DATE = datetime(2025, 1, 1)
     if present > LOCK_DATE:
       sg.popup('Completed running', 'Demo expired')
     else:
