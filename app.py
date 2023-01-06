@@ -5,7 +5,7 @@ from generator import Grid
 from display_image import colorSelectorTkWindow, about_me
 from input_params import TileParams
 import pickle
-from PIL import Image, ImageTk, ImageGrab
+from PIL import Image, ImageTk
 
 # sg.theme('Dark Teal')
 
@@ -46,6 +46,7 @@ class App:
         self.disabled_color  = Color(hexcode='#808080', name='disabled')
         self.enabled_color   = Color(hexcode='#ffffff', name='enabled')
 
+        self.set_lusso_theme()
         self.init_values()
         self.init_graphics()
 
@@ -61,7 +62,35 @@ class App:
         self.add_gloss = False
         self.auto_update_titled_view = False
         self.view_rotated_view_options = True
-    
+
+    def set_lusso_theme(self):
+        self.canvas_bg_color    = '#f8f6e9' #ivory
+
+        self.lusso_bg_color         = '#5e685f' # olive green
+        self.lusso_text_color       = '#f8f6e9' # ivory
+        self.lusso_button_color     = '#94a897' # light olive green
+        self.lusso_fill_field_color = '#f8f6e9' # ivory
+
+        new_theme = {"BACKGROUND": self.lusso_bg_color, "TEXT": self.lusso_text_color, "INPUT": sg.COLOR_SYSTEM_DEFAULT,
+             "TEXT_INPUT": sg.COLOR_SYSTEM_DEFAULT, "SCROLL": sg.COLOR_SYSTEM_DEFAULT,
+             "BUTTON": sg.OFFICIAL_PYSIMPLEGUI_BUTTON_COLOR, "PROGRESS": sg.COLOR_SYSTEM_DEFAULT, "BORDER": 1,
+             "SLIDER_DEPTH": 1, "PROGRESS_DEPTH": 0
+             }
+        sg.theme_add_new('Lusso', new_theme)
+        sg.theme('Lusso')
+
+        self.lusso_font = 'Audrey'
+        self.font_small = (self.lusso_font, 10)
+        self.lusso_font = 'Audrey'
+        self.font_big   = (self.lusso_font, 15)
+        sg.set_options(font=self.font_small)
+
+    def lusso_logo_init(self):
+        lusso_logo = Image.open('Lusso_Surfaces_png_ivory.png')
+        lusso_logo = lusso_logo.resize((300, 300), resample=Image.BICUBIC)
+        self.lusso_logo_im = ImageTk.PhotoImage(lusso_logo)
+        self.window['-LOGO-'].Update(data=self.lusso_logo_im)
+
     def init_graphics(self):
         # ------ Menu Definition ------ #
         menu_def = [['&File', ['&Load PTG', 'Save &PTG', '&Save Image', 'Save &Tiled Image','E&xit']],
@@ -70,46 +99,46 @@ class App:
 
         # ------ EITHER THIS  ------ #
         single_bg_color_menu = [
-            [sg.Text(f'Background', font='ANY 10', size=(12,1)),
-            sg.In("", size=(7, 1), enable_events=True, key=f'-SET_BG_COLOR-', do_not_clear=True),
+            [sg.Text(f'Background', font=self.font_small, size=(12,1)),
+            sg.In("", size=(7, 1), enable_events=True, key=f'-SET_BG_COLOR-', do_not_clear=True, background_color=self.lusso_fill_field_color),
             sg.ColorChooserButton("", size=(5, 1), target=f'-SET_BG_COLOR-', button_color=('#808080', '#808080'),
                                   border_width=1, key=f'-bg_color_chooser-')]
           ]
         # ------ OR THIS  ------ #
         blend_mode_color_sel = [
-            [sg.Text(f'Color#{i}', font='ANY 10', size=(12,1)),
-            sg.In("", size=(7, 1), enable_events=True, key=f'-BLEND_COLOR{i}-', do_not_clear=True),
+            [sg.Text(f'Color#{i}', font=self.font_small, size=(12,1)),
+            sg.In("", size=(7, 1), enable_events=True, key=f'-BLEND_COLOR{i}-', do_not_clear=True, background_color=self.lusso_fill_field_color),
             sg.ColorChooserButton("", size=(5, 1), target=f'-BLEND_COLOR{i}-', button_color=('#1f77b4', '#1f77b4'),
                                   border_width=1, key=f'-blend_color_chooser{i}-'),
-            sg.In("0", size=(7, 1), enable_events=True, key=f'-BLEND_COLOR{i}_PERCENT-', do_not_clear=True)]
+            sg.In("0", size=(7, 1), enable_events=True, key=f'-BLEND_COLOR{i}_PERCENT-', do_not_clear=True, background_color=self.lusso_fill_field_color)]
             for i in range(self.blend_mode_color_count)
           ]
 
         
         pixel_color_swap_menu = [
-            [sg.Text(f'New Color', font='ANY 15', size=(12,1)),
-            sg.In("", size=(7, 1), enable_events=True, key=f'-SET_PIXEL_COLOR_NEW-', do_not_clear=True),
+            [sg.Text(f'New Color', font=self.font_big, size=(12,1)),
+            sg.In("", size=(7, 1), enable_events=True, key=f'-SET_PIXEL_COLOR_NEW-', do_not_clear=True, background_color=self.lusso_fill_field_color),
             sg.ColorChooserButton("", size=(5, 1), target=f'-SET_PIXEL_COLOR_NEW-', button_color=('#1f77b4', '#1f77b4'),
                                   border_width=1, key=f'-set_new_pixel_color_chooser-'),
             sg.Button(button_text='Change', key='-PIXEL_COLOR_SWAP_BUTTON-')]
           ]
         
-        unit_size = [[sg.Text('Pixel Size', font='ANY 15')],
-          [sg.Text('Height: ', size=(10,1)), sg.In(k='-UNIT_HEIGHT-', size=(8,1), enable_events=True)],
-          [sg.Text('Width: ' , size=(10,1)), sg.In(k='-UNIT_WIDTH-' , size=(8,1), enable_events=True)]]
-        unit_number = [[sg.Text('Pixel Number', font='ANY 15')],
-          [sg.Text('Num Height: ', size=(10,1)), sg.In(k='-UNIT_NUM_HEIGHT-', size=(8,1), enable_events=True)],
-          [sg.Text('Num Width: ' , size=(10,1)), sg.In(k='-UNIT_NUM_WIDTH-' , size=(8,1), enable_events=True)]]
+        unit_size = [[sg.Text('Pixel Size', font=self.font_big)],
+          [sg.Text('Height: ', size=(10,1)), sg.In(k='-UNIT_HEIGHT-', size=(8,1), enable_events=True, background_color=self.lusso_fill_field_color)],
+          [sg.Text('Width: ' , size=(10,1)), sg.In(k='-UNIT_WIDTH-' , size=(8,1), enable_events=True, background_color=self.lusso_fill_field_color)]]
+        unit_number = [[sg.Text('Pixel Number', font=self.font_big)],
+          [sg.Text('Num Height: ', size=(10,1)), sg.In(k='-UNIT_NUM_HEIGHT-', size=(8,1), enable_events=True, background_color=self.lusso_fill_field_color)],
+          [sg.Text('Num Width: ' , size=(10,1)), sg.In(k='-UNIT_NUM_WIDTH-' , size=(8,1), enable_events=True, background_color=self.lusso_fill_field_color)]]
 
         left_pane = [
           [sg.Menu(menu_def, tearoff=True)],
-          [sg.Text('Tile Size', font='ANY 15')],
-          [sg.Text('Height: ', size=(12,1)), sg.In(k='-TILE_HEIGHT-', size=(10,1))],
-          [sg.Text('Width: ' , size=(12,1)), sg.In(k='-TILE_WIDTH-' , size=(10,1))],
+          [sg.Text('Tile Size', font=self.font_big)],
+          [sg.Text('Height: ', size=(12,1)), sg.In(k='-TILE_HEIGHT-', size=(10,1), background_color=self.lusso_fill_field_color)],
+          [sg.Text('Width: ' , size=(12,1)), sg.In(k='-TILE_WIDTH-' , size=(10,1), background_color=self.lusso_fill_field_color)],
 
           [sg.Column(unit_size), sg.Column(unit_number)],
 
-          [sg.Text('Grouting Size', font='ANY 15'), 
+          [sg.Text('Grouting Size', font=self.font_big), 
              sg.Slider(range=(1, 5), default_value=1,
                        orientation='h',
                        key='-GROUTING_SIZE-',
@@ -122,15 +151,15 @@ class App:
           [self.collapse(single_bg_color_menu, 'single_color_menu', not self.blend_mode_on)],
           [sg.HorizontalSeparator()],
 
-          [sg.Text('Pixel Color', font='ANY 15', size=(12,1)),
-           sg.In("", size=(7, 1), visible=True, enable_events=True, key='-SET_PIXEL_COLOR-', do_not_clear=True),
+          [sg.Text('Pixel Color', font=self.font_big, size=(12,1)),
+           sg.In("", size=(7, 1), visible=True, enable_events=True, key='-SET_PIXEL_COLOR-', do_not_clear=True, background_color=self.lusso_fill_field_color),
            sg.ColorChooserButton("", size=(5, 1), target='-SET_PIXEL_COLOR-', button_color=('#1f77b4', '#1f77b4'),
                                  border_width=1, key='-set_pixel_color_chooser-')],
           [self.collapse(pixel_color_swap_menu, 'pixel_color_swap_menu', self.tool_picked=='-Color_Swapper-')],
           [sg.HorizontalSeparator()],
           
-          [sg.Text('Grouting Color', font='ANY 15', size=(12,1)),
-           sg.In("", size=(7, 1), visible=True, enable_events=True, key='-SET_GROUTING_COLOR-'),
+          [sg.Text('Grouting Color', font=self.font_big, size=(12,1)),
+           sg.In("", size=(7, 1), visible=True, enable_events=True, key='-SET_GROUTING_COLOR-', background_color=self.lusso_fill_field_color),
            sg.ColorChooserButton("", size=(5, 1), target='-SET_GROUTING_COLOR-', button_color=('#1f77b4', '#1f77b4'),
                                  border_width=1, key='-set_grouting_color_chooser-')],
           [sg.HorizontalSeparator()],
@@ -153,7 +182,8 @@ class App:
            sg.Radio('Color Picker', 'tool_name', key='-Color_Picker-',  enable_events=True, tooltip='Press h ')],
           [sg.HorizontalSeparator()],
           
-          [sg.Ok(button_text='Generate', key='-Generate-'), sg.Cancel()]
+          [sg.Ok(button_text='Generate', key='-Generate-', button_color=self.lusso_button_color),
+           sg.Cancel(button_color=self.lusso_button_color)]
         ]
         
         work_canvas = sg.Graph(
@@ -162,7 +192,7 @@ class App:
           graph_top_right=(self.canvas_dimensions[0], 0),
           key="-CANVAS-",
           change_submits=True,  # mouse click events
-          background_color='lightblue',
+          background_color=self.canvas_bg_color,
           drag_submits=True)
         
         tiled_canvas = sg.Graph(
@@ -171,7 +201,7 @@ class App:
           graph_top_right=(self.tiled_view_px_dimensions[0], 0),
           key="-TILED_CANVAS-",
           change_submits=False,  # mouse click events
-          background_color='lightblue',
+          background_color=self.canvas_bg_color,
           drag_submits=False)
         
         rotated_view_options = [
@@ -179,13 +209,14 @@ class App:
            sg.Radio('Anticlockwise', 'rotated_mode_options', key='-TILED_Rotated_ANTI_CLK-' , enable_events=True)]
         ]
         right_pane = [
-          [sg.Text('Room Size', font='ANY 15')],
-          [sg.Column([[sg.Text('Height: ', size=(12,1)), sg.In(k='-ROOM_HEIGHT-', size=(10,1), default_text=self.room_dimensions[0])]]),
-           sg.Column([[sg.Text('Width: ' , size=(12,1)), sg.In(k='-ROOM_WIDTH-' , size=(10,1), default_text=self.room_dimensions[1])]])],
+          [sg.Image(size=(300,300), key='-LOGO-')],
+          [sg.Text('Room Size', font=self.font_big)],
+          [sg.Column([[sg.Text('Height: ', size=(12,1)), sg.In(k='-ROOM_HEIGHT-', size=(10,1), background_color=self.lusso_fill_field_color, default_text=self.room_dimensions[0])]]),
+           sg.Column([[sg.Text('Width: ' , size=(12,1)), sg.In(k='-ROOM_WIDTH-' , size=(10,1), background_color=self.lusso_fill_field_color, default_text=self.room_dimensions[1])]])],
           [sg.HorizontalSeparator()],
 
           [sg.Checkbox('Auto Update Tiled View', enable_events=True, key='-AUTO_UPDATE_TITLED_VIEW-', default=self.auto_update_titled_view)],
-          [sg.Button(button_text='Update titled view', key='-UPDATE_TITLED_VIEW-', tooltip='Press SPACE')],
+          [sg.Button(button_text='Update titled view', key='-UPDATE_TITLED_VIEW-', button_color=self.lusso_button_color, tooltip='Press SPACE')],
           [sg.Radio('Rotated',  'tile_mode', key='-TILED_Rotated-' , enable_events=True, default=True),
            sg.Radio('Mirrored', 'tile_mode', key='-TILED_Mirrored-' , enable_events=True),
            sg.Radio('Repeated', 'tile_mode', key='-TILED_Repeated-', enable_events=True)],
@@ -195,7 +226,11 @@ class App:
           [tiled_canvas]
         ]
         layout = [
-          [sg.Column(left_pane), work_canvas, sg.Column(right_pane)]
+            [ 
+            sg.Column(left_pane),
+            work_canvas,
+            sg.Column(right_pane)
+            ]
         ]
         
         self.window = sg.Window('Application', layout, finalize=True, resizable=True, return_keyboard_events=True)
@@ -332,8 +367,8 @@ class App:
                   event in ['-set_pixel_color_chooser-']:
               past_event = None
 
-            # if event == '__TIMEOUT__':
-            #   continue
+            if event == '__TIMEOUT__':
+              continue
             #if the event if a KEYBOARD INPUT then change the event variable
             if event in self.keyboard_mapping_to_event.keys():
               event = self.keyboard_mapping_to_event[event]
@@ -677,6 +712,7 @@ class App:
         new_im.save(filepath)
       
     def play(self):
+        self.lusso_logo_init()
         self.event_loop()
 
     def save_ptg(self, file_path):
@@ -735,5 +771,5 @@ if (__name__ == "__main__"):
     else:
       game = App()
       game.play()
-      sg.popup('Completed running.', 'Click OK to exit the program')
+      # sg.popup('Completed running.', 'Click OK to exit the program')
       game.window.close()
