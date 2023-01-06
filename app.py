@@ -79,14 +79,21 @@ class App:
         sg.theme_add_new('Lusso', new_theme)
         sg.theme('Lusso')
 
-        self.lusso_font = 'Audrey'
+        self.lusso_font = 'ANY'
         self.font_small = (self.lusso_font, 10)
-        self.lusso_font = 'Audrey'
+        self.lusso_font = 'ANY'
         self.font_big   = (self.lusso_font, 15)
         sg.set_options(font=self.font_small)
 
     def lusso_logo_init(self):
-        lusso_logo = Image.open('Lusso_Surfaces_png_ivory.png')
+        import sys
+        import os
+        if getattr(sys, 'frozen', False):
+            file=os.path.join(sys._MEIPASS, "files/Lusso_Surfaces_png_ivory.png")
+        else:
+            file="files/Lusso_Surfaces_png_ivory.png"
+        
+        lusso_logo = Image.open(file)
         lusso_logo = lusso_logo.resize((300, 300), resample=Image.BICUBIC)
         self.lusso_logo_im = ImageTk.PhotoImage(lusso_logo)
         self.window['-LOGO-'].Update(data=self.lusso_logo_im)
@@ -216,7 +223,7 @@ class App:
           [sg.HorizontalSeparator()],
 
           [sg.Checkbox('Auto Update Tiled View', enable_events=True, key='-AUTO_UPDATE_TITLED_VIEW-', default=self.auto_update_titled_view)],
-          [sg.Button(button_text='Update titled view', key='-UPDATE_TITLED_VIEW-', button_color=self.lusso_button_color, tooltip='Press SPACE')],
+          [sg.Button(button_text='Update tiled view', key='-UPDATE_TITLED_VIEW-', button_color=self.lusso_button_color, tooltip='Press SPACE')],
           [sg.Radio('Rotated',  'tile_mode', key='-TILED_Rotated-' , enable_events=True, default=True),
            sg.Radio('Mirrored', 'tile_mode', key='-TILED_Mirrored-' , enable_events=True),
            sg.Radio('Repeated', 'tile_mode', key='-TILED_Repeated-', enable_events=True)],
