@@ -6,6 +6,7 @@ class TileParams:
         self.TILE_WIDTH  = 300
         self.TILE_HEIGHT = 300
         self.GROUTING_SIZE = 1
+        self.unique_colors = []
 
         self.no_per_width     = None #will be calculated later
         self.no_per_height    = None #will be calculated later
@@ -168,3 +169,7 @@ class TileParams:
                     \nEnter newer values and try again!".format(self.no_per_width, self.no_per_height)
                 return Failure(error_msg)
 
+    def add_to_color_list(self, NEW_COLOR):
+        color_hex = NEW_COLOR.pixel_color.get_hex()
+        if color_hex not in self.unique_colors:
+            self.unique_colors.append(color_hex)

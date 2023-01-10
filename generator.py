@@ -203,6 +203,15 @@ class Grid:
                     pixel_color=new_color, grouting_color=self.tileParams.GROUTING_COLOR)
         self.image = image
 
+    def get_color_pallete(self):
+        self.tileParams.unique_colors = []
+        for i in range(self.tileParams.no_per_height):
+            for j in range(self.tileParams.no_per_width):
+                self.tileParams.add_to_color_list(self.rect.pixels_grid[j][i])
+
+    def get_grouting_color(self):
+        return self.tileParams.GROUTING_COLOR.get_hex()
+
     def change_grouting_color(self, new_color):
         self.rect.pixel_shape.grouting_color = new_color
         newImage = self.rect.recolorGrouting(self.image, new_color)

@@ -542,6 +542,10 @@ class App:
               elif event == "Save PTG":
                 print('Saving PTG to:', file_loc)
                 self.save_ptg(file_loc)
+
+                file_loc = file_loc[:-4] + '_pallete.txt'
+                print('Saving pallete to:', file_loc)
+                self.save_pallete(file_loc)
               else:
                 print('Saving to:', file_loc)
                 self.grid.save_image(filename=file_loc)
@@ -722,6 +726,22 @@ class App:
         self.lusso_logo_init()
         self.event_loop()
 
+    def save_pallete(self, file_path):
+      with open(file_path, 'w') as outp:
+        outp.write("Tile dimensions :" + str(self.tileParams.TILE_WIDTH)      + 'X' + str(self.tileParams.TILE_HEIGHT))
+        outp.write("\nPixel Number    :" + str(self.tileParams.no_per_width)    + 'X' + str(self.tileParams.no_per_height))
+        outp.write("\nPixel dimensions:" + str(self.tileParams.rectangle_width) + 'X' + str(self.tileParams.rectangle_height))
+        
+        outp.write("\nGrouting size   :" + str(self.tileParams.GROUTING_SIZE))
+        outp.write("\nRoom dimensions :" + str(self.room_dimensions[0]) + 'X' + str(self.room_dimensions[1]))
+        
+        outp.write("\n\n\nColors used:")
+        self.grid.get_color_pallete()
+        for i, color_ in enumerate(self.tileParams.unique_colors):
+          outp.write("\nColor #" + str(i) + ':' + color_)
+
+        outp.write("\nGrouting Color: " + self.grid.get_grouting_color())
+          
     def save_ptg(self, file_path):
       with open(file_path, 'wb') as outp:
         pickle.dump(self.tileParams, outp, pickle.HIGHEST_PROTOCOL)
